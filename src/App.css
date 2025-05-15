@@ -1,5 +1,5 @@
 .App {
-  text-align: center;
+  /* text-align: center; */
 }
 
 .App-logo {
@@ -34,5 +34,35 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+.App {
+  min-height: 100vh;
+  background-color: #f0f0f0;
+  padding: 20px 0;
+}
+
+@media (max-width: 576px) {
+  .travel-mode-options {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .add-person-form {
+    flex-direction: column;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .form-buttons button {
+    width: 100%;
+  }
+
+  .step-label {
+    font-size: 10px;
   }
 }

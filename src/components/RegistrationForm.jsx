@@ -1,0 +1,227 @@
+import React, { useState, useEffect } from "react";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import PhoneInput from "./PhoneInput";
+import PersonalInfo from "./PersonalInfo";
+import TravelingInfo from "./TravelingInfo";
+import AdditionalPeople from "./AdditionalPeople";
+import PaymentConfirmation from "./PaymentConfirmation";
+import ProgressBar from "./ProgressBar";
+import "../styles/RegistrationForm.css";
+
+const RegistrationForm = ({ db, storage }) => {
+  const [step, setStep] = useState(0);
+  const [userData, setUserData] = useState({
+    phoneNumber: "",
+    name: "",
+    city: "",
+    state: "",
+    photoURL: "",
+    hasHusband: false,
+    husbandName: "",
+    arrivalDate: "",
+    arrivalTime: "",
+    travelMode: "train",
+    departureDate: "",
+    departureTime: "",
+    additionalPeople: [],
+    paymentAmount: 500,
+    paymentStatus: "pending",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [userExists, setUserExists] = useState(false);
+
+  // Check if user exists in Firebase
+  const checkUserExists = async (phoneNumber) => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const userQuery = query(
+        collection(db, "users"),
+        where("contact_no", "==", phoneNumber)
+      );
+      const querySnapshot = await getDocs(userQuery);
+
+      console.log("querySnapshot 000000>", querySnapshot);
+
+      if (!querySnapshot.empty) {
+        // User exists, prefill data
+        const userData = querySnapshot.docs[0].data();
+        setUserData((prevData) => ({
+          ...prevData,
+          name: userData.name || "",
+          city: userData.city || "",
+          state: userData.state || "",
+          photoURL: userData.photoURL || "",
+          phoneNumber,
+        }));
+        setUserExists(true);
+        setStep(1); // Move to personal info
+      } else {
+        // New user
+        setUserData((prevData) => ({
+          ...prevData,
+          phoneNumber,
+        }));
+        setUserExists(false);
+        setStep(1); // Move to personal info
+      }
+    } catch (error) {
+      console.error("Error checking user:", error);
+      setError("कृपया बाद में पुनः प्रयास करें।");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (file) => {
+    if (!file) return null;
+
+    const storageRef = ref(
+      storage,
+      `photos/${userData.phoneNumber}_${Date.now()}`
+    );
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Progress can be tracked here if needed
+        },
+        (error) => {
+          reject(error);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            resolve(downloadURL);
+          });
+        }
+      );
+    });
+  };
+
+  // Update form data
+  const updateUserData = (data) => {
+    setUserData((prevData) => ({
+      ...prevData,
+      ...data,
+    }));
+  };
+
+  // Navigate to next step
+  const nextStep = () => {
+    setStep((prevStep) => prevStep + 1);
+  };
+
+  // Navigate to previous step
+  const prevStep = () => {
+    setStep((prevStep) => Math.max(0, prevStep - 1));
+  };
+
+  // Calculate payment amount based on selections
+  useEffect(() => {
+    let amount = userData.hasHusband ? 1000 : 500;
+    // Add additional people cost if needed
+    setUserData((prevData) => ({
+      ...prevData,
+      paymentAmount: amount,
+    }));
+  }, [userData.hasHusband]);
+
+  // Render the appropriate form step
+  const renderStep = () => {
+    switch (step) {
+      case 0:
+        return (
+          <PhoneInput
+            phoneNumber={userData.phoneNumber}
+            updateUserData={updateUserData}
+            checkUserExists={checkUserExists}
+            loading={loading}
+            error={error}
+          />
+        );
+      case 1:
+        return (
+          <PersonalInfo
+            userData={userData}
+            updateUserData={updateUserData}
+            handleFileUpload={handleFileUpload}
+            nextStep={nextStep}
+            prevStep={prevStep}
+          />
+        );
+      case 2:
+        return (
+          <TravelingInfo
+            userData={userData}
+            updateUserData={updateUserData}
+            nextStep={nextStep}
+            prevStep={prevStep}
+          />
+        );
+      case 3:
+        return (
+          <AdditionalPeople
+            userData={userData}
+            updateUserData={updateUserData}
+            nextStep={nextStep}
+            prevStep={prevStep}
+          />
+        );
+      case 4:
+        return (
+          <PaymentConfirmation
+            userData={userData}
+            updateUserData={updateUserData}
+            prevStep={prevStep}
+          />
+        );
+      default:
+        return (
+          <PhoneInput
+            phoneNumber={userData.phoneNumber}
+            updateUserData={updateUserData}
+            checkUserExists={checkUserExists}
+            loading={loading}
+            error={error}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="registration-container">
+      <div className="header">
+        <div className="logo-container">
+          <img
+            src="https://beti-terapanth-ki.griphhy.com/assets/img/bizconnect-logo-new%20(1).png"
+            alt="Jain Śvetāmbara Terapanth Mahasabha"
+            className="logo"
+          />
+        </div>
+      </div>
+
+      <div className="form-card">
+        <div className="beti-logo-container">
+          <img
+            src="https://beti-terapanth-ki.griphhy.com/assets/img/middle%20logo.svg"
+            alt="Jain Śvetāmbara Terapanth Mahasabha"
+            className="logo"
+          />
+        </div>
+
+        {step > 0 && <ProgressBar currentStep={step} totalSteps={4} />}
+
+        <div className="form-content">{renderStep()}</div>
+      </div>
+    </div>
+  );
+};
+
+export default RegistrationForm;

@@ -1,0 +1,21 @@
+/* styles/PersonalInfo.css */
+.personal-info-container {
+  padding: 10px 0;
+}
+
+.profile-preview {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #5e0d8b;
+}
+
+/* styles/TravelingInfo.css */
+.traveling-info-container {
+  padding: 10px 0;
+}
+
+.travel-mode-options {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}

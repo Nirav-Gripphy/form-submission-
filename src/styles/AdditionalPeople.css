@@ -1,0 +1,43 @@
+/* styles/AdditionalPeople.css */
+.additional-people-container {
+  padding: 10px 0;
+}
+
+.additional-info {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.add-person-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.add-person-form .form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.add-person-btn {
+  height: 38px;
+  margin-bottom: 15px;
+}
+
+.additional-people-list {
+  margin-bottom: 20px;
+}
+
+.additional-people-list h4 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #5e0d8b;
+}

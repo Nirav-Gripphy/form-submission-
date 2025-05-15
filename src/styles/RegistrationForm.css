@@ -1,0 +1,135 @@
+/* styles/RegistrationForm.css */
+.registration-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: "Arial", sans-serif;
+}
+
+.header {
+  background-color: #b11a1a;
+  color: white;
+  padding: 15px;
+  border-radius: 8px 8px 0 0;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  /* max-width: 60px; */
+  margin-bottom: 5px;
+}
+
+.hindi-text {
+  font-size: 20px;
+  margin: 0;
+}
+
+.form-card {
+  background-color: white;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #ddd;
+  border-top: none;
+}
+
+.beti-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  background-color: #f5f5f5;
+}
+
+.hindi-title {
+  font-size: 32px;
+  color: #5e0d8b;
+  margin: 0;
+  font-weight: bold;
+}
+
+.hindi-subtitle {
+  font-size: 20px;
+  color: #333;
+  margin: 0;
+}
+
+.hindi-tagline {
+  font-size: 14px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.form-content {
+  padding: 20px;
+}
+
+.form-section-title {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 20px;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 576px) {
+  .registration-container {
+    padding: 10px;
+  }
+
+  .hindi-text {
+    font-size: 18px;
+  }
+
+  .hindi-title {
+    font-size: 28px;
+  }
+
+  .hindi-subtitle {
+    font-size: 18px;
+  }
+}
+
+/* Styles for dark mode if needed */
+@media (prefers-color-scheme: dark) {
+  .form-card {
+    background-color: #ffffff;
+    color: #333;
+  }
+
+  .beti-logo-container {
+    background-color: #ffffff;
+  }
+
+  .hindi-subtitle {
+    color: #e0e0e0;
+  }
+
+  .hindi-tagline {
+    color: #aaa;
+  }
+}
