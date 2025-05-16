@@ -6,22 +6,23 @@ import { getStorage } from "firebase/storage";
 import RegistrationForm from "./components/RegistrationForm";
 import "bootstrap";
 import "./App.css";
+import firebase, { db, storage } from "./services/firebase";
 
 // Your Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyCwCRZPsg-oeJnNm6S_7yEYnA2U0hiqGbE",
-  authDomain: "beti-terapanth-ki-reg-form.firebaseapp.com",
-  projectId: "beti-terapanth-ki-reg-form",
-  storageBucket: "beti-terapanth-ki-reg-form.firebasestorage.app",
-  messagingSenderId: "401396289015",
-  appId: "1:401396289015:web:9a346efc5024b86c82b2f2",
-  measurementId: "G-GZ2WTFBCQW",
-};
+// const firebaseConfig = {
+//   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+//   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+//   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+//   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+//   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+//   appId: process.env.REACT_APP_FIREBASE_APP_ID,
+//   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
+// };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
+// // Initialize Firebase
+// const app = initializeApp(firebaseConfig);
+// const db = getFirestore(app);
+// const storage = getStorage(app);
 
 function App() {
   return (

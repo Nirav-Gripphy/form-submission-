@@ -45,8 +45,6 @@ const RegistrationForm = ({ db, storage }) => {
       );
       const querySnapshot = await getDocs(userQuery);
 
-      console.log("querySnapshot 000000>", querySnapshot);
-
       if (!querySnapshot.empty) {
         // User exists, prefill data
         const userData = querySnapshot.docs[0].data();
