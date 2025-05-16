@@ -39,7 +39,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
   const saveRegistration = async (paymentDetails = {}) => {
     try {
-      // Save registration data
+      // Registration data to save/update
       const registrationData = {
         phoneNumber: userData.phoneNumber,
         name: userData.name,
@@ -58,30 +58,52 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         paymentStatus: paymentDetails.status || "failed",
         paymentId: paymentDetails.paymentId || "",
         orderId: paymentDetails.orderId || "",
-        registrationDate: new Date(),
+        updatedAt: new Date(),
       };
 
-      const registrationRef = await addDoc(
-        collection(db, "registrations"),
-        registrationData
-      );
-      return registrationRef.id;
+      // Add registrationDate only for new records
+      if (!registrationId) {
+        registrationData.registrationDate = new Date();
+      }
+
+      let regId = registrationId;
+
+      console.log("regId --------->", regId);
+
+      if (regId) {
+        // Update the existing failed registration
+        console.log("Updating existing registration:", regId);
+        const registrationDocRef = doc(db, "registrations", regId);
+        await updateDoc(registrationDocRef, registrationData);
+      } else {
+        // Create a new registration
+        console.log("Creating new registration");
+        const registrationRef = await addDoc(
+          collection(db, "registrations"),
+          registrationData
+        );
+        regId = registrationRef.id;
+        // Store the registration ID in state for potential retries
+        setRegistrationId(regId);
+      }
+
+      return regId;
     } catch (error) {
-      console.error("Error saving registration:", error);
+      console.error("Error saving/updating registration:", error);
       throw error;
     }
   };
 
   const handlePaymentSuccess = async (paymentDetails) => {
     try {
-      // Save registration to Firebase
+      console.log("Payment success with registrationId:", registrationId);
+      // Save/update registration in Firebase
       const regId = await saveRegistration({
         status: "completed",
         paymentId: paymentDetails.razorpayPaymentId,
         orderId: paymentDetails.razorpayOrderId,
       });
 
-      setRegistrationId(regId);
       setPaymentId(paymentDetails.razorpayPaymentId);
       setOrderId(paymentDetails.razorpayOrderId);
       setPaymentSuccess(true);
@@ -111,11 +133,12 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     setPaymentSuccess(false);
 
     try {
-      // Still save registration but mark as failed
-      const regId = await saveRegistration({
+      console.log("Payment failed with registrationId:", registrationId);
+      // Save/update registration but mark as failed
+      await saveRegistration({
         status: "failed",
       });
-      setRegistrationId(regId);
+      // Note: We don't need to setRegistrationId here anymore as it's set in saveRegistration
     } catch (saveError) {
       console.error("Error saving failed payment registration:", saveError);
     }
@@ -208,7 +231,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     <div className="payment-success" ref={receiptRef}>
       <div className="receipt-header">
         <h2>BETI TERAPANTH KI</h2>
-        <p>Registration Receipt</p>
+        <p>Payment Receipt</p>
       </div>
 
       <div className="success-icon">
@@ -235,7 +258,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         </div>
 
         <div className="detail-item">
-          <span>शहर:</span>
+          <span>स्थान:</span>
           <span>
             {userData.city}, {userData.state}
           </span>
@@ -323,8 +346,10 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         <button
           className="btn btn-primary retry-btn"
           onClick={() => {
+            // Just clear error and payment failed state, but KEEP the registrationId
             setPaymentFailed(false);
             setError("");
+            // No need to reset registrationId here
           }}
         >
           पुनः प्रयास करें
@@ -348,7 +373,6 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         <div className="download-options">
           <button
             className="btn btn-primary download-btn"
-            // onClick={handlePrint}
             onClick={reactToPrintFn}
           >
             <i className="fas fa-download"></i> रसीद डाउनलोड करें
@@ -410,7 +434,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         </div>
 
         <div className="summary-item">
-          <span>Location/शहर:</span>
+          <span>Place/स्थान:</span>
           <span>{[userData?.city, userData?.state].join(", ")}</span>
         </div>
 
@@ -439,7 +463,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       <div className="form-buttons">
         <button
           type="button"
-          className="btn btn-secondary"
+          className="btn btn-secondary secondry-cutom-btn"
           onClick={prevStep}
           disabled={processing}
         >
@@ -447,7 +471,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         </button>
         <button
           type="button"
-          className="btn btn-success payment-btn"
+          className="btn btn-success primary-custom-btn"
           onClick={displayRazorpay}
           disabled={processing}
         >

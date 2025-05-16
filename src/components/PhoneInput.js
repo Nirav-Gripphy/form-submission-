@@ -16,7 +16,7 @@ const PhoneInput = ({
 
     // Basic validation
     if (!localPhone || localPhone.length !== 10) {
-      setInputError("कृपया 10 अंक का मोबाइल नंबर दर्ज करें");
+      setInputError("Please enter valid mobile number.");
       return;
     }
 
@@ -46,7 +46,7 @@ const PhoneInput = ({
 
         <button
           type="submit"
-          className="btn btn-primary check-registration-btn"
+          className="btn btn-primary check-registration-btn out"
           disabled={loading}
         >
           {loading ? (
@@ -59,7 +59,7 @@ const PhoneInput = ({
               <span className="ms-2">Loading</span>
             </span>
           ) : (
-            "Check Registration"
+            "Next"
           )}
         </button>
       </form>

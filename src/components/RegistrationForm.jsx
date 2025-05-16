@@ -21,7 +21,7 @@ const RegistrationForm = ({ db, storage }) => {
     husbandName: "",
     arrivalDate: "",
     arrivalTime: "",
-    travelMode: "train",
+    travelMode: "",
     departureDate: "",
     departureTime: "",
     additionalPeople: [],
@@ -201,6 +201,10 @@ const RegistrationForm = ({ db, storage }) => {
             src="https://beti-terapanth-ki.griphhy.com/assets/img/bizconnect-logo-new%20(1).png"
             alt="Jain Śvetāmbara Terapanth Mahasabha"
             className="logo"
+            style={{
+              height: "50px",
+              width: "inherit",
+            }}
           />
         </div>
       </div>
@@ -208,9 +212,13 @@ const RegistrationForm = ({ db, storage }) => {
       <div className="form-card">
         <div className="beti-logo-container">
           <img
-            src="https://beti-terapanth-ki.griphhy.com/assets/img/middle%20logo.svg"
+            src="./logo-with-star.svg"
             alt="Jain Śvetāmbara Terapanth Mahasabha"
             className="logo"
+            style={{
+              height: step > 0 ? "80px" : "100%",
+              width: "inherit",
+            }}
           />
         </div>
 

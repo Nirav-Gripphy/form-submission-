@@ -23,13 +23,13 @@
 }
 
 .add-person-form .form-group {
-  flex: 1;
-  min-width: 200px;
+  /* flex: 1; */
+  /* min-width: 200px; */
+  width: 100%;
 }
 
 .add-person-btn {
   height: 38px;
-  margin-bottom: 15px;
 }
 
 .additional-people-list {

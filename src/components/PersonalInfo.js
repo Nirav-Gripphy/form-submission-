@@ -108,7 +108,9 @@ const PersonalInfo = ({
         )}
 
         <div className="form-group">
-          <label htmlFor="name">Name/नाम</label>
+          <label htmlFor="name" className="isRequired">
+            Name/नाम
+          </label>
           <input
             type="text"
             className={`form-control ${errors.name ? "is-invalid" : ""}`}
@@ -122,7 +124,9 @@ const PersonalInfo = ({
         </div>
 
         <div className="form-group">
-          <label htmlFor="city">City/शहर</label>
+          <label htmlFor="city" className="isRequired">
+            City/शहर
+          </label>
           <input
             type="text"
             className={`form-control ${errors.city ? "is-invalid" : ""}`}
@@ -136,7 +140,9 @@ const PersonalInfo = ({
         </div>
 
         <div className="form-group">
-          <label htmlFor="state">State/राज्य</label>
+          <label htmlFor="state" className="isRequired">
+            State/राज्य
+          </label>
           <input
             type="text"
             className={`form-control ${errors.state ? "is-invalid" : ""}`}
@@ -182,7 +188,7 @@ const PersonalInfo = ({
               checked={localData.hasHusband}
               onChange={handleInputChange}
             />
-            <label className="form-check-label" htmlFor="hasHusband">
+            <label className="form-check-label " htmlFor="hasHusband">
               ⁠Would your husband coming along with you (क्या जीवनसाथी साथ
               आएंगे)
             </label>
@@ -191,7 +197,9 @@ const PersonalInfo = ({
 
         {localData.hasHusband && (
           <div className="form-group">
-            <label htmlFor="husbandName">Husband Name/जीवनसाथी का नाम</label>
+            <label htmlFor="husbandName" className="isRequired">
+              Husband Name/जीवनसाथी का नाम
+            </label>
             <input
               type="text"
               className={`form-control ${
@@ -212,14 +220,14 @@ const PersonalInfo = ({
         <div className="form-buttons">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary secondry-cutom-btn"
             onClick={prevStep}
           >
             Previous
           </button>
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary primary-custom-btn"
             disabled={uploading}
           >
             {uploading ? (
