@@ -128,3 +128,9 @@
 .form-check-input:focus {
   box-shadow: none !important;
 }
+
+@media print {
+  #hideOnPrint {
+    display: none !important;
+  }
+}

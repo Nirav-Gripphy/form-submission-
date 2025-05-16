@@ -216,7 +216,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
         const paymentObject = new window.Razorpay(options);
         paymentObject.on("payment.failed", function (response) {
-          handlePaymentFailure(response.error);
+          // handlePaymentFailure(response.error);
         });
         paymentObject.open();
       }
@@ -240,6 +240,15 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
       <h3>पंजीकरण सफल!</h3>
       <p>आपका पंजीकरण सफलतापूर्वक हो गया है।</p>
+
+      <div className="download-options" id="hideOnPrint">
+        <button
+          className="btn btn-primary download-btn primary-custom-btn"
+          onClick={reactToPrintFn}
+        >
+          <i className="fas fa-download"></i> रसीद डाउनलोड करें
+        </button>
+      </div>
 
       <div className="registration-details">
         <div className="detail-item">
@@ -372,13 +381,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         </div>
         <div className="download-options">
           <button
-            className="btn btn-primary download-btn"
-            onClick={reactToPrintFn}
-          >
-            <i className="fas fa-download"></i> रसीद डाउनलोड करें
-          </button>
-          <button
-            className="btn btn-secondary done-btn"
+            className="btn btn-secondary done-btn secondry-cutom-btn "
             onClick={() => {
               // Additional action if needed when done
               // For example, redirect to home or profile page

@@ -194,39 +194,57 @@ const RegistrationForm = ({ db, storage }) => {
   };
 
   return (
-    <div className="registration-container">
-      <div className="header">
-        <div className="logo-container">
-          <img
-            src="https://beti-terapanth-ki.griphhy.com/assets/img/bizconnect-logo-new%20(1).png"
-            alt="Jain Śvetāmbara Terapanth Mahasabha"
-            className="logo"
-            style={{
-              height: "50px",
-              width: "inherit",
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="form-card">
-        <div className="beti-logo-container">
-          <img
-            src="./logo-with-star.svg"
-            alt="Jain Śvetāmbara Terapanth Mahasabha"
-            className="logo"
-            style={{
-              height: step > 0 ? "80px" : "100%",
-              width: "inherit",
-            }}
-          />
+    <>
+      <div className="registration-container">
+        <div className="header">
+          <div className="logo-container">
+            <img
+              src="https://beti-terapanth-ki.griphhy.com/assets/img/bizconnect-logo-new%20(1).png"
+              alt="Jain Śvetāmbara Terapanth Mahasabha"
+              className="logo"
+              style={{
+                height: "50px",
+                width: "inherit",
+              }}
+            />
+          </div>
         </div>
 
-        {step > 0 && <ProgressBar currentStep={step} totalSteps={4} />}
+        <div className="form-card">
+          <div className="beti-logo-container">
+            <img
+              src="./logo-with-star.svg"
+              alt="Jain Śvetāmbara Terapanth Mahasabha"
+              className="logo"
+              style={{
+                height: step > 0 ? "80px" : "100%",
+                width: "inherit",
+              }}
+            />
+          </div>
 
-        <div className="form-content">{renderStep()}</div>
+          {step > 0 && <ProgressBar currentStep={step} totalSteps={4} />}
+
+          <div className="form-content">{renderStep()}</div>
+        </div>
       </div>
-    </div>
+      {step === 0 && (
+        <footer
+          style={{
+            position: "absolute",
+            width: "100%",
+            bottom: "0px",
+            zIndex: "1",
+            textAlign: "center",
+          }}
+        >
+          <img
+            src="./footer.svg"
+            style={{ maxWidth: "340px", marginTop: "0px", paddingTop: "0px" }}
+          />
+        </footer>
+      )}
+    </>
   );
 };
 
