@@ -26,7 +26,7 @@ const styles = `
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 150px;
+    min-height: 200px;
   }
   
   .upload-icon {
@@ -128,12 +128,17 @@ const PersonalInfo = ({
     hasHusband: userData.hasHusband || false,
     husbandName: userData.husbandName || "",
     photoFile: null,
+    husbandPhotoFile: null,
   });
 
   const [previewImage, setPreviewImage] = useState(userData.photoURL || null);
+  const [husbandPreviewImage, setHusbandPreviewImage] = useState(
+    userData.husbandPhotoURL || null
+  );
   const [errors, setErrors] = useState({});
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isHusbandDragging, setIsHusbandDragging] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -169,16 +174,24 @@ const PersonalInfo = ({
   const handleFileChange = (e) => {
     if (e.target.files[0]) {
       const file = e.target.files[0];
-      processFile(file);
+      processFile(file, "user");
     }
   };
 
-  const processFile = (file) => {
+  const handleHusbandFileChange = (e) => {
+    if (e.target.files[0]) {
+      const file = e.target.files[0];
+      processFile(file, "husband");
+    }
+  };
+
+  const processFile = (file, personType) => {
     // Validate file is an image
     if (!file.type.match("image.*")) {
       setErrors((prev) => ({
         ...prev,
-        photo: "कृपया केवल छवि फ़ाइलें अपलोड करें (jpg, png, gif, etc.)",
+        [personType === "husband" ? "husbandPhoto" : "photo"]:
+          "कृपया केवल छवि फ़ाइलें अपलोड करें (jpg, png, gif, etc.)",
       }));
       return;
     }
@@ -187,28 +200,33 @@ const PersonalInfo = ({
     if (file.size > 5 * 1024 * 1024) {
       setErrors((prev) => ({
         ...prev,
-        photo: "छवि 5MB से कम होनी चाहिए",
+        [personType === "husband" ? "husbandPhoto" : "photo"]:
+          "छवि 5MB से कम होनी चाहिए",
       }));
       return;
     }
 
     setLocalData((prev) => ({
       ...prev,
-      photoFile: file,
+      [personType === "husband" ? "husbandPhotoFile" : "photoFile"]: file,
     }));
 
     // Create a preview for the selected image
     const reader = new FileReader();
     reader.onloadend = () => {
-      setPreviewImage(reader.result);
+      if (personType === "husband") {
+        setHusbandPreviewImage(reader.result);
+      } else {
+        setPreviewImage(reader.result);
+      }
     };
     reader.readAsDataURL(file);
 
     // Clear any previous errors
-    if (errors.photo) {
+    if (errors[personType === "husband" ? "husbandPhoto" : "photo"]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors.photo;
+        delete newErrors[personType === "husband" ? "husbandPhoto" : "photo"];
         return newErrors;
       });
     }
@@ -232,7 +250,29 @@ const PersonalInfo = ({
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0]);
+      processFile(e.dataTransfer.files[0], "user");
+    }
+  };
+
+  const handleHusbandDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsHusbandDragging(true);
+  };
+
+  const handleHusbandDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsHusbandDragging(false);
+  };
+
+  const handleHusbandDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsHusbandDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0], "husband");
     }
   };
 
@@ -246,9 +286,14 @@ const PersonalInfo = ({
     try {
       // Process photo upload if there's a file
       let photoURL = userData.photoURL;
+      let husbandPhotoURL = userData.husbandPhotoURL;
 
       if (localData.photoFile) {
         photoURL = await handleFileUpload(localData.photoFile);
+      }
+
+      if (localData.hasHusband && localData.husbandPhotoFile) {
+        husbandPhotoURL = await handleFileUpload(localData.husbandPhotoFile);
       }
 
       // Update the user data
@@ -259,6 +304,7 @@ const PersonalInfo = ({
         photoURL,
         hasHusband: localData.hasHusband,
         husbandName: localData.hasHusband ? localData.husbandName : "",
+        husbandPhotoURL: localData.hasHusband ? husbandPhotoURL : null,
       });
 
       nextStep();
@@ -382,19 +428,12 @@ const PersonalInfo = ({
                       document.getElementById("photo").click();
                     }}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="currentColor"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                      <path
-                        fillRule="evenodd"
-                        d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
-                      />
-                    </svg>
+                    <i
+                      class="bi bi-pencil-square"
+                      style={{
+                        width: "16px",
+                      }}
+                    ></i>
                     बदलें
                   </button>
                   <button
@@ -405,16 +444,12 @@ const PersonalInfo = ({
                       setLocalData((prev) => ({ ...prev, photoFile: null }));
                     }}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="currentColor"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
-                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z" />
-                    </svg>
+                    <i
+                      class="bi bi-trash"
+                      style={{
+                        width: "16px",
+                      }}
+                    ></i>
                     हटाएं
                   </button>
                 </div>
@@ -449,35 +484,127 @@ const PersonalInfo = ({
         </div>
 
         {localData.hasHusband && (
-          <div className="form-group">
-            <label htmlFor="husbandName" className="isRequired">
-              Husband Name/जीवनसाथी का नाम
-            </label>
-            <input
-              type="text"
-              className={`form-control ${
-                errors.husbandName ? "is-invalid" : ""
-              }`}
-              id="husbandName"
-              name="husbandName"
-              value={localData.husbandName}
-              onChange={handleInputChange}
-              placeholder="जीवनसाथी का नाम दर्ज करें"
-            />
-            {errors.husbandName && (
-              <div className="invalid-feedback">{errors.husbandName}</div>
-            )}
-          </div>
+          <>
+            <div className="form-group">
+              <label htmlFor="husbandName" className="isRequired">
+                Husband Name/जीवनसाथी का नाम
+              </label>
+              <input
+                type="text"
+                className={`form-control ${
+                  errors.husbandName ? "is-invalid" : ""
+                }`}
+                id="husbandName"
+                name="husbandName"
+                value={localData.husbandName}
+                onChange={handleInputChange}
+                placeholder="जीवनसाथी का नाम दर्ज करें"
+              />
+              {errors.husbandName && (
+                <div className="invalid-feedback">{errors.husbandName}</div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="husbandPhoto">जीवनसाथी का फोटो</label>
+
+              <div
+                className={`photo-upload-container ${
+                  isHusbandDragging ? "dragging" : ""
+                }`}
+                onDragOver={handleHusbandDragOver}
+                onDragLeave={handleHusbandDragLeave}
+                onDrop={handleHusbandDrop}
+              >
+                {!husbandPreviewImage ? (
+                  <div className="upload-placeholder">
+                    <div className="upload-icon">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="48"
+                        height="48"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+                        <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
+                      </svg>
+                    </div>
+                    <p className="upload-text">
+                      जीवनसाथी का फोटो अपलोड करने के लिए क्लिक करें या यहां
+                      खींचें
+                    </p>
+                    <input
+                      type="file"
+                      className="file-input"
+                      id="husbandPhoto"
+                      accept="image/*"
+                      onChange={handleHusbandFileChange}
+                    />
+                  </div>
+                ) : (
+                  <div className="preview-container">
+                    <img
+                      src={husbandPreviewImage}
+                      alt="Husband Profile Preview"
+                      className="image-preview"
+                    />
+                    <div className="preview-actions">
+                      <button
+                        type="button"
+                        className="change-photo-btn"
+                        onClick={() => {
+                          document.getElementById("husbandPhoto").click();
+                        }}
+                      >
+                        <i
+                          class="bi bi-pencil-square"
+                          style={{
+                            width: "16px",
+                          }}
+                        ></i>
+                        बदलें
+                      </button>
+                      <button
+                        type="button"
+                        className="remove-photo-btn"
+                        onClick={() => {
+                          setHusbandPreviewImage(null);
+                          setLocalData((prev) => ({
+                            ...prev,
+                            husbandPhotoFile: null,
+                          }));
+                        }}
+                      >
+                        <i
+                          class="bi bi-trash"
+                          style={{
+                            width: "16px",
+                          }}
+                        ></i>
+                        हटाएं
+                      </button>
+                    </div>
+                    <input
+                      type="file"
+                      className="file-input hidden"
+                      id="husbandPhoto"
+                      accept="image/*"
+                      onChange={handleHusbandFileChange}
+                    />
+                  </div>
+                )}
+              </div>
+              {errors.husbandPhoto && (
+                <div className="error-message">{errors.husbandPhoto}</div>
+              )}
+            </div>
+          </>
         )}
 
-        <div className="form-buttons">
-          <button
-            type="button"
-            className="btn btn-secondary secondry-cutom-btn"
-            onClick={prevStep}
-          >
-            Previous
-          </button>
+        <div className="form-buttons" style={{
+          justifyContent: "flex-end"
+        }}>
           <button
             type="submit"
             className="btn btn-primary primary-custom-btn"

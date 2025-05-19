@@ -267,3 +267,71 @@
 .detail-item > span:last-child {
   margin-left: 10px;
 }
+
+/* Add these styles to PaymentConfirmation.css */
+
+.barcode-section {
+  margin: 15px 0;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  /* border-bottom: 1px solid #ddd; */
+  background-color: #fff;
+}
+
+.barcode-section h4 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  text-align: center;
+  color: #333;
+}
+
+.barcode-container {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.barcode-svg {
+  max-width: 90%;
+  height: auto;
+}
+
+.barcode-info {
+  text-align: center;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+.barcode-info p {
+  margin: 3px 0;
+  font-weight: 500;
+}
+
+.barcode-download-btn {
+  display: block;
+  margin: 15px auto;
+  padding: 8px 16px;
+  border-radius: 4px;
+  background-color: #fff;
+  border: 1px solid #007bff;
+  color: #007bff;
+  transition: all 0.3s ease;
+}
+
+.barcode-download-btn:hover {
+  background-color: #007bff;
+  color: #fff;
+}
+
+/* Hide certain elements when printing */
+@media print {
+  #hideOnPrint {
+    display: none !important;
+  }
+
+  .barcode-section {
+    page-break-inside: avoid;
+    border: none;
+    background-color: #fff;
+  }
+}

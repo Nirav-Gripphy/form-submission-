@@ -39,33 +39,58 @@ const RegistrationForm = ({ db, storage }) => {
     setError("");
 
     try {
+      // Step 1: Check in 'registration' collection
+      const registrationQuery = query(
+        collection(db, "registrations"),
+        where("phoneNumber", "==", phoneNumber)
+      );
+      const registrationSnapshot = await getDocs(registrationQuery);
+
+      if (!registrationSnapshot.empty) {
+        const regData = registrationSnapshot.docs[0].data();
+
+        setUserData({
+          name: regData.name || "",
+          city: regData.city || "",
+          state: regData.state || "",
+          phoneNumber: regData.phoneNumber || phoneNumber,
+          photoURL: regData.photoURL || "",
+          // Add more fields as per your data model
+          ...regData,
+          id: registrationSnapshot.docs[0].id,
+        });
+
+        setUserExists(true);
+        setStep(4); // Step for already registered users
+        return;
+      }
+
+      // Step 2: Check in 'users' collection
       const userQuery = query(
         collection(db, "users"),
         where("contact_no", "==", phoneNumber)
       );
-      const querySnapshot = await getDocs(userQuery);
+      const userSnapshot = await getDocs(userQuery);
 
-      if (!querySnapshot.empty) {
-        // User exists, prefill data
-        const userData = querySnapshot.docs[0].data();
+      if (!userSnapshot.empty) {
+        const userData = userSnapshot.docs[0].data();
+
         setUserData((prevData) => ({
           ...prevData,
           name: userData.name || "",
           city: userData.city || "",
           state: userData.state || "",
+          phoneNumber,
           photoURL: userData.photoURL || "",
-          phoneNumber,
         }));
+
         setUserExists(true);
-        setStep(1); // Move to personal info
+        setStep(1); // Step for partial users
       } else {
-        // New user
-        setUserData((prevData) => ({
-          ...prevData,
-          phoneNumber,
-        }));
-        setUserExists(false);
-        setStep(1); // Move to personal info
+        // Step 3: Not found anywhere — redirect
+        const googleFormUrl =
+          "https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform";
+        window.location.href = googleFormUrl;
       }
     } catch (error) {
       console.error("Error checking user:", error);

@@ -1,5 +1,5 @@
 // components/PaymentConfirmation.js - Payment details and confirmation
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   collection,
   addDoc,
@@ -15,6 +15,7 @@ import { generate15DigitNumber } from "../helper/generate15DigitNumber";
 import axios from "axios";
 import { useReactToPrint } from "react-to-print";
 import { db } from "../services/firebase";
+import JsBarcode from "jsbarcode"; // Import JsBarcode library
 
 const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const [processing, setProcessing] = useState(false);
@@ -24,11 +25,124 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const [registrationId, setRegistrationId] = useState("");
   const [paymentId, setPaymentId] = useState("");
   const [orderId, setOrderId] = useState("");
+  const [primaryBarcodeData, setPrimaryBarcodeData] = useState("");
+  const [spouseBarcodeData, setSpouseBarcodeData] = useState("");
   const receiptRef = useRef(null);
+  const primaryBarcodeRef = useRef(null);
+  const spouseBarcodeRef = useRef(null);
+
+  useEffect(() => {
+    if (userData.paymentStatus === "completed") {
+      setPaymentSuccess(true);
+      setPaymentId(userData.paymentId);
+      setOrderId(userData.orderId);
+      setRegistrationId(userData.id);
+
+      // Set primary barcode data if available in userData, otherwise generate it
+      if (userData.primaryBarcodeId) {
+        setPrimaryBarcodeData(userData.primaryBarcodeId);
+      } else {
+        // Generate a shorter, more compact ID for the primary barcode
+        const shortId =
+          userData.id + generateRandomString(6) + "--" + userData.name;
+        setPrimaryBarcodeData(shortId);
+      }
+
+      // Set spouse barcode data if user has husband and barcode is available
+      if (userData.hasHusband) {
+        if (userData.spouseBarcodeId) {
+          setSpouseBarcodeData(userData.spouseBarcodeId);
+        } else {
+          // Generate a different barcode for spouse
+          const spouseShortId =
+            userData.id + generateRandomString(6) + "--" + userData.husbandName;
+          setSpouseBarcodeData(spouseShortId);
+        }
+      }
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    // Generate primary barcode when barcodeData is available and component is mounted
+    if (primaryBarcodeData && primaryBarcodeRef.current) {
+      try {
+        JsBarcode(primaryBarcodeRef.current, primaryBarcodeData, {
+          format: "CODE128",
+          lineColor: "#000",
+          width: 1.5, // Reduced width
+          height: 50, // Reduced height
+          displayValue: true,
+          fontSize: 12, // Smaller font size
+          margin: 5, // Smaller margin
+          background: "#fff",
+          text: primaryBarcodeData.substring(0, 15), // Show only first part of code for cleaner display
+        });
+      } catch (error) {
+        console.error("Error generating primary barcode:", error);
+      }
+    }
+
+    // Generate spouse barcode when data is available and user has husband
+    if (userData.hasHusband && spouseBarcodeData && spouseBarcodeRef.current) {
+      try {
+        JsBarcode(spouseBarcodeRef.current, spouseBarcodeData, {
+          format: "CODE128",
+          lineColor: "#000",
+          width: 1.5,
+          height: 50,
+          displayValue: true,
+          fontSize: 12,
+          margin: 5,
+          background: "#fff",
+          text: spouseBarcodeData.substring(0, 15),
+        });
+      } catch (error) {
+        console.error("Error generating spouse barcode:", error);
+      }
+    }
+  }, [
+    primaryBarcodeData,
+    spouseBarcodeData,
+    userData.hasHusband,
+    paymentSuccess,
+  ]);
 
   const reactToPrintFn = useReactToPrint({
     contentRef: receiptRef,
   });
+
+  // Function to download barcode as image
+  const downloadBarcode = (barcodeRef, name) => {
+    if (barcodeRef.current) {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+
+      // Set canvas dimensions to match SVG
+      canvas.width = barcodeRef.current.width.baseVal.value;
+      canvas.height = barcodeRef.current.height.baseVal.value;
+
+      // Draw white background
+      context.fillStyle = "#FFFFFF";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Convert SVG to string
+      const svgData = new XMLSerializer().serializeToString(barcodeRef.current);
+      const img = new Image();
+
+      img.onload = function () {
+        // Draw the image onto the canvas
+        context.drawImage(img, 0, 0);
+
+        // Create download link
+        const downloadLink = document.createElement("a");
+        downloadLink.download = `barcode-${name}-${registrationId}.png`;
+        downloadLink.href = canvas.toDataURL("image/png");
+        downloadLink.click();
+      };
+
+      img.src = "data:image/svg+xml;base64," + btoa(svgData);
+    }
+  };
 
   // Calculate payment amount based on user data
   const calculateAmount = () => {
@@ -39,6 +153,9 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
   const saveRegistration = async (paymentDetails = {}) => {
     try {
+      // Generate attendee count for barcode
+      const attendeeCount = userData.hasHusband ? "2" : "1";
+
       // Registration data to save/update
       const registrationData = {
         phoneNumber: userData.phoneNumber,
@@ -58,6 +175,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         paymentStatus: paymentDetails.status || "failed",
         paymentId: paymentDetails.paymentId || "",
         orderId: paymentDetails.orderId || "",
+        attendeeCount: attendeeCount, // Add attendee count for barcode
         updatedAt: new Date(),
       };
 
@@ -67,8 +185,6 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       }
 
       let regId = registrationId;
-
-      console.log("regId --------->", regId);
 
       if (regId) {
         // Update the existing failed registration
@@ -109,13 +225,35 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       setPaymentSuccess(true);
       setPaymentFailed(false);
 
+      // Generate primary barcode data
+      const primaryShortId =
+        regId + generateRandomString(6) + "--" + userData.name;
+      setPrimaryBarcodeData(primaryShortId);
+
+      // Generate spouse barcode data if user has husband
+      let spouseShortId = "";
+      if (userData.hasHusband) {
+        spouseShortId =
+          regId + generateRandomString(6) + "--" + userData.husbandName;
+        setSpouseBarcodeData(spouseShortId);
+      }
+
       // Update the payment status
-      updateUserData({
+      const updatedData = {
         paymentStatus: "completed",
         paymentAmount: calculateAmount(),
         paymentId: paymentDetails.razorpayPaymentId,
         orderId: paymentDetails.razorpayOrderId,
-      });
+        id: regId,
+        primaryBarcodeId: primaryShortId,
+      };
+
+      // Add spouse barcode ID if exists
+      if (userData.hasHusband) {
+        updatedData.spouseBarcodeId = spouseShortId;
+      }
+
+      updateUserData(updatedData);
     } catch (error) {
       console.error("Error processing successful payment:", error);
       setPaymentFailed(true);
@@ -127,21 +265,34 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     }
   };
 
+  // Helper function to generate random string for barcode
+  const generateRandomString = (length) => {
+    const characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(
+        Math.floor(Math.random() * characters.length)
+      );
+    }
+    return result;
+  };
+
   const handlePaymentFailure = async (error) => {
     setProcessing(false);
     setPaymentFailed(true);
     setPaymentSuccess(false);
 
-    try {
-      console.log("Payment failed with registrationId:", registrationId);
-      // Save/update registration but mark as failed
-      await saveRegistration({
-        status: "failed",
-      });
-      // Note: We don't need to setRegistrationId here anymore as it's set in saveRegistration
-    } catch (saveError) {
-      console.error("Error saving failed payment registration:", saveError);
-    }
+    // try {
+    //   console.log("Payment failed with registrationId:", registrationId);
+    //   // Save/update registration but mark as failed
+    //   await saveRegistration({
+    //     status: "failed",
+    //   });
+    //   // Note: We don't need to setRegistrationId here anymore as it's set in saveRegistration
+    // } catch (saveError) {
+    //   console.error("Error saving failed payment registration:", saveError);
+    // }
 
     setError(
       `भुगतान असफल: ${error.description || error.message || "अज्ञात त्रुटि"}`
@@ -249,6 +400,47 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           <i className="fas fa-download"></i> रसीद डाउनलोड करें
         </button>
       </div>
+
+      {/* Primary Barcode Section */}
+      <div className="barcode-section" id="hideOnPrint">
+        <h4>प्राथमिक आवेदक का प्रवेश बारकोड</h4>
+        <div className="barcode-container" id="hideOnPrint">
+          <svg ref={primaryBarcodeRef} className="barcode-svg"></svg>
+        </div>
+        <div className="barcode-info">
+          <p>नाम: {userData.name}</p>
+        </div>
+        <button
+          className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
+          onClick={() => downloadBarcode(primaryBarcodeRef, "primary")}
+          id="hideOnPrint"
+        >
+          <i className="fas fa-qrcode"></i> बारकोड डाउनलोड करें
+        </button>
+      </div>
+
+      {/* Spouse Barcode Section - Only show if user has spouse */}
+      {userData.hasHusband && (
+        <div
+          className="barcode-section spouse-barcode-section"
+          id="hideOnPrint"
+        >
+          <h4>जीवनसाथी का प्रवेश बारकोड</h4>
+          <div className="barcode-container">
+            <svg ref={spouseBarcodeRef} className="barcode-svg"></svg>
+          </div>
+          <div className="barcode-info">
+            <p>नाम: {userData.husbandName}</p>
+          </div>
+          <button
+            className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
+            onClick={() => downloadBarcode(spouseBarcodeRef, "spouse")}
+            id="hideOnPrint"
+          >
+            <i className="fas fa-qrcode"></i> बारकोड डाउनलोड करें
+          </button>
+        </div>
+      )}
 
       <div className="registration-details">
         <div className="detail-item">
@@ -378,37 +570,6 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       <div className="payment-result-container">
         <div ref={receiptRef}>
           <PaymentSuccessView />
-        </div>
-        <div className="download-options">
-          <button
-            className="btn btn-secondary done-btn secondry-cutom-btn "
-            onClick={() => {
-              // Additional action if needed when done
-              // For example, redirect to home or profile page
-              updateUserData({
-                name: "",
-                phoneNumber: "",
-                city: "",
-                state: "",
-                photoURL: "",
-                hasHusband: false,
-                husbandName: "",
-                arrivalDate: "",
-                arrivalTime: "",
-                travelMode: "",
-                departureDate: "",
-                departureTime: "",
-                additionalPeople: [],
-                paymentStatus: "",
-                paymentAmount: 0,
-                paymentId: "",
-                orderId: "",
-              });
-              window.location.reload();
-            }}
-          >
-            पूर्ण
-          </button>
         </div>
       </div>
     );
