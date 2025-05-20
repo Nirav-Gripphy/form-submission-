@@ -88,8 +88,7 @@ const RegistrationForm = ({ db, storage }) => {
         setStep(1); // Step for partial users
       } else {
         // Step 3: Not found anywhere — redirect
-        const googleFormUrl =
-          "https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform";
+        const googleFormUrl = process.env.REACT_APP_GOOGLE_FORM;
         window.location.href = googleFormUrl;
       }
     } catch (error) {
