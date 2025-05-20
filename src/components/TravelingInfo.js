@@ -108,6 +108,7 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    console.log("name vakue", name, value);
 
     setLocalData((prev) => ({
       ...prev,
@@ -151,7 +152,7 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
           <label htmlFor="arrivalDate" className="isRequired">
             Arrival Date/आगमन तिथि
           </label>
-          <input
+          {/* <input
             type="date"
             className={`form-control ${errors.arrivalDate ? "is-invalid" : ""}`}
             id="arrivalDate"
@@ -159,7 +160,22 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
             value={localData.arrivalDate}
             onChange={handleInputChange}
             // min={today} // Cannot select past dates
-          />
+          /> */}
+          <select
+            className={`form-select ${errors.arrivalDate ? "is-invalid" : ""}`}
+            id="arrivalDate"
+            name="arrivalDate"
+            aria-label="Default select example"
+            value={localData.arrivalDate}
+            onChange={handleInputChange}
+          >
+            <option value={""} selected>
+              आगमन तिथि चुनें
+            </option>
+            <option value="2025-07-25"> ⁠25 जुलाई 2025</option>
+            <option value="2025-07-26">26 जुलाई 2025</option>
+          </select>
+
           {errors.arrivalDate && (
             <div className="invalid-feedback">{errors.arrivalDate}</div>
           )}
@@ -195,8 +211,8 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
                 className="form-check-input"
                 id="flightMode"
                 name="travelMode"
-                value="flight"
-                checked={localData.travelMode === "flight"}
+                value="Flight"
+                checked={localData.travelMode === "Flight"}
                 onChange={handleInputChange}
               />
               <label className="form-check-label" htmlFor="flightMode">
@@ -210,8 +226,8 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
                 className="form-check-input"
                 id="trainMode"
                 name="travelMode"
-                value="train"
-                checked={localData.travelMode === "train"}
+                value="Train"
+                checked={localData.travelMode === "Train"}
                 onChange={handleInputChange}
               />
               <label className="form-check-label" htmlFor="trainMode">
@@ -225,8 +241,8 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
                 className="form-check-input"
                 id="carMode"
                 name="travelMode"
-                value="car"
-                checked={localData.travelMode === "car"}
+                value="Car"
+                checked={localData.travelMode === "Car"}
                 onChange={handleInputChange}
               />
               <label className="form-check-label" htmlFor="carMode">
@@ -243,7 +259,7 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
           <label htmlFor="departureDate" className="isRequired">
             Departure Date/प्रस्थान तिथि
           </label>
-          <input
+          {/* <input
             type="date"
             className={`form-control ${
               errors.departureDate ? "is-invalid" : ""
@@ -253,7 +269,25 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
             value={localData.departureDate}
             onChange={handleInputChange}
             min={minDepartureDate || today} // Can't be earlier than arrival date or today
-          />
+          /> */}
+
+          <select
+            className={`form-select ${
+              errors.departureDate ? "is-invalid" : ""
+            }`}
+            aria-label="Default select example"
+            id="departureDate"
+            name="departureDate"
+            value={localData.departureDate}
+            onChange={handleInputChange}
+          >
+            <option value={""} selected>
+              प्रस्थान तिथि चुनें
+            </option>
+            <option value="2025-07-26"> ⁠26 जुलाई 2025</option>
+            <option value="2025-07-27"> ⁠27 जुलाई 2025</option>
+            <option value="2025-07-28">28 जुलाई 2025</option>
+          </select>
           {errors.departureDate && (
             <div className="invalid-feedback">{errors.departureDate}</div>
           )}

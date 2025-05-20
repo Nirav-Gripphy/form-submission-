@@ -475,14 +475,16 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         <div className="detail-item">
           <span>आगमन:</span>
           <span>
-            {userData.arrivalDate} - {userData.arrivalTime}
+            {new Date(userData?.arrivalDate)?.toDateString()} -{" "}
+            {userData.arrivalTime}
           </span>
         </div>
 
         <div className="detail-item">
           <span>प्रस्थान:</span>
           <span>
-            {userData.departureDate} - {userData.departureTime}
+            {new Date(userData?.departureDate)?.toDateString()} -{" "}
+            {userData.departureTime}
           </span>
         </div>
 
@@ -508,7 +510,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
         <div className="detail-item">
           <span>दिनांक:</span>
-          <span>{new Date().toLocaleDateString()}</span>
+          <span>{new Date().toDateString()}</span>
         </div>
       </div>
 
