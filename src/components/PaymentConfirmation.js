@@ -101,31 +101,73 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     contentRef: receiptRef,
   });
 
-  // Function to download barcode as image
-  const downloadBarcode = (barcodeRef, name) => {
+  const downloadBarcode = (barcodeRef, registrationId, type) => {
     if (barcodeRef.current) {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
 
-      // Set canvas dimensions to match SVG
-      canvas.width = barcodeRef.current.width.baseVal.value;
-      canvas.height = barcodeRef.current.height.baseVal.value;
+      const barcodeOriginalWidth = barcodeRef.current.width.baseVal.value;
+      const barcodeOriginalHeight = barcodeRef.current.height.baseVal.value;
 
-      // Draw white background
+      // Scale barcode
+      const barcodeScale = 2;
+      const barcodeWidth = barcodeOriginalWidth * barcodeScale;
+      const barcodeHeight = barcodeOriginalHeight * barcodeScale;
+
+      const fontSize = 12;
+      const lineHeight = fontSize + 6;
+
+      const lines = [
+        `नाम: ${
+          !userData.hasHusband ? userData.name : userData.husbandName ?? ""
+        }`,
+        `मोबाइल: ${userData.phoneNumber ?? ""}`,
+        `शहर: ${userData.city ?? ""}`,
+        `राज्य: ${userData.state ?? ""}`,
+        type
+          ? `जीवनसाथी के साथ: ${userData.hasHusband ? "हाँ" : "नहीं"}`
+          : null,
+      ].filter((res) => res);
+
+      const textPaddingTop = 10;
+      const textPaddingBottom = 20; // Add this
+      const textHeight = lines.length * lineHeight;
+      const canvasWidth = barcodeWidth;
+      const canvasHeight =
+        barcodeHeight + textPaddingTop + textHeight + textPaddingBottom;
+
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // White background
       context.fillStyle = "#FFFFFF";
       context.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Convert SVG to string
+      // Convert SVG to Image
       const svgData = new XMLSerializer().serializeToString(barcodeRef.current);
       const img = new Image();
 
       img.onload = function () {
-        // Draw the image onto the canvas
-        context.drawImage(img, 0, 0);
+        // Draw barcode
+        context.drawImage(img, 0, 0, barcodeWidth, barcodeHeight);
 
-        // Create download link
+        // Text styles
+        context.fillStyle = "#000000";
+        context.font = `${fontSize}px Arial`;
+        context.textAlign = "left";
+
+        // Draw lines
+        lines.forEach((line, index) => {
+          context.fillText(
+            line,
+            10,
+            barcodeHeight + textPaddingTop + (index + 1) * lineHeight
+          );
+        });
+
+        // Download image
         const downloadLink = document.createElement("a");
-        downloadLink.download = `barcode-${name}-${registrationId}.png`;
+        downloadLink.download = `barcode-${registrationId}.png`;
         downloadLink.href = canvas.toDataURL("image/png");
         downloadLink.click();
       };
@@ -431,15 +473,27 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           <p>मोबाइल: {userData.phoneNumber}</p>
           <p>शहर: {userData.city}</p>
           <p>राज्य: {userData.state}</p>
+          <p>राज्य: {userData.state}</p>
           <p>बारकोड: {primaryBarcodeData}</p>
+          <p>`जीवनसाथी के साथ: {userData.hasHusband ? "हाँ" : "नहीं"}</p>
         </div>
         <button
           className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
-          onClick={() => downloadBarcode(primaryBarcodeRef, "primary")}
+          onClick={() =>
+            downloadBarcode(primaryBarcodeRef, userData.primaryBarcodeId, true)
+          }
           id="hideOnPrint"
         >
           <i className="fas fa-qrcode"></i> बारकोड डाउनलोड करें
         </button>
+
+        <span
+          style={{
+            fontSize: "10px",
+          }}
+        >
+          कृपया इसे सुरक्षित रखें, सम्मेलन के दौरान यह उपयोगी होगा।
+        </span>
       </div>
 
       {/* Spouse Barcode Section - Only show if user has spouse */}
@@ -461,11 +515,21 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           </div>
           <button
             className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
-            onClick={() => downloadBarcode(spouseBarcodeRef, "spouse")}
+            onClick={() =>
+              downloadBarcode(spouseBarcodeRef, userData.spouseBarcodeId)
+            }
             id="hideOnPrint"
           >
             <i className="fas fa-qrcode"></i> बारकोड डाउनलोड करें
           </button>
+          <span
+            style={{
+              fontSize: "10px",
+            }}
+          >
+            {" "}
+            कृपया इसे सुरक्षित रखें, सम्मेलन के दौरान यह उपयोगी होगा।
+          </span>
         </div>
       )}
 

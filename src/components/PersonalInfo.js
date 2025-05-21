@@ -149,9 +149,9 @@ const PersonalInfo = ({
     if (!localData.state.trim()) newErrors.state = "राज्य आवश्यक है";
 
     // ✅ Check if photoFile is present and is a valid File object
-    // if (!localData.photoFile || !(localData.photoFile instanceof File)) {
-    //   newErrors.photoFile = "फोटो आवश्यक है";
-    // }
+    if (!localData.photoFile || !(localData.photoFile instanceof File)) {
+      newErrors.photoFile = "फोटो आवश्यक है";
+    }
 
     // ✅ If hasHusband is true, check husband name and photo file
     if (localData.hasHusband) {
