@@ -9,7 +9,7 @@ const styles = `
     border-radius: 8px;
     padding: 20px;
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     background-color: #f9f9f9;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -141,13 +141,30 @@ const PersonalInfo = ({
   const [isHusbandDragging, setIsHusbandDragging] = useState(false);
 
   const validateForm = () => {
+    console.log("localData 00000", localData);
     const newErrors = {};
 
     if (!localData.name.trim()) newErrors.name = "नाम आवश्यक है";
     if (!localData.city.trim()) newErrors.city = "शहर आवश्यक है";
     if (!localData.state.trim()) newErrors.state = "राज्य आवश्यक है";
-    if (localData.hasHusband && !localData.husbandName.trim()) {
-      newErrors.husbandName = "जीवनसाथी का नाम आवश्यक है";
+
+    // ✅ Check if photoFile is present and is a valid File object
+    // if (!localData.photoFile || !(localData.photoFile instanceof File)) {
+    //   newErrors.photoFile = "फोटो आवश्यक है";
+    // }
+
+    // ✅ If hasHusband is true, check husband name and photo file
+    if (localData.hasHusband) {
+      if (!localData.husbandName.trim()) {
+        newErrors.husbandName = "जीवनसाथी का नाम आवश्यक है";
+      }
+
+      if (
+        !localData.husbandPhotoFile ||
+        !(localData.husbandPhotoFile instanceof File)
+      ) {
+        newErrors.husbandPhotoFile = "जीवनसाथी फोटो आवश्यक है";
+      }
     }
 
     setErrors(newErrors);
@@ -223,10 +240,12 @@ const PersonalInfo = ({
     reader.readAsDataURL(file);
 
     // Clear any previous errors
-    if (errors[personType === "husband" ? "husbandPhoto" : "photo"]) {
+    if (errors[personType === "husband" ? "husbandPhotoFile" : "photoFile"]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors[personType === "husband" ? "husbandPhoto" : "photo"];
+        delete newErrors[
+          personType === "husband" ? "husbandPhotoFile" : "photoFile"
+        ];
         return newErrors;
       });
     }
@@ -340,6 +359,7 @@ const PersonalInfo = ({
             name="name"
             value={localData.name}
             onChange={handleInputChange}
+            readOnly
             placeholder="अपना नाम दर्ज करें"
           />
           {errors.name && <div className="invalid-feedback">{errors.name}</div>}
@@ -355,6 +375,7 @@ const PersonalInfo = ({
             id="city"
             name="city"
             value={localData.city}
+            readOnly
             onChange={handleInputChange}
             placeholder="अपना शहर दर्ज करें"
           />
@@ -371,6 +392,7 @@ const PersonalInfo = ({
             id="state"
             name="state"
             value={localData.state}
+            readOnly
             onChange={handleInputChange}
             placeholder="अपना राज्य दर्ज करें"
           />
@@ -380,7 +402,9 @@ const PersonalInfo = ({
         </div>
 
         <div className="form-group">
-          <label htmlFor="photo">फोटो</label>
+          <label htmlFor="photo" className="isRequired">
+            ⁠Photo/फोटो
+          </label>
 
           <div
             className={`photo-upload-container ${isDragging ? "dragging" : ""}`}
@@ -463,7 +487,9 @@ const PersonalInfo = ({
               </div>
             )}
           </div>
-          {errors.photo && <div className="error-message">{errors.photo}</div>}
+          {errors.photoFile && (
+            <div className="error-message text-start">{errors.photoFile}</div>
+          )}
         </div>
 
         <div className="form-group">
@@ -477,8 +503,7 @@ const PersonalInfo = ({
               onChange={handleInputChange}
             />
             <label className="form-check-label " htmlFor="hasHusband">
-              ⁠Would your husband coming along with you (क्या जीवनसाथी साथ
-              आएंगे)
+              Would your husband coming along with you / क्या जीवनसाथी साथ आएंगे
             </label>
           </div>
         </div>
@@ -506,7 +531,9 @@ const PersonalInfo = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="husbandPhoto">जीवनसाथी का फोटो</label>
+              <label htmlFor="husbandPhoto" className="isRequired">
+                Husband Photo/जीवनसाथी का फोटो
+              </label>
 
               <div
                 className={`photo-upload-container ${
@@ -595,16 +622,21 @@ const PersonalInfo = ({
                   </div>
                 )}
               </div>
-              {errors.husbandPhoto && (
-                <div className="error-message">{errors.husbandPhoto}</div>
+              {errors.husbandPhotoFile && (
+                <div className="error-message text-start">
+                  {errors.husbandPhotoFile}
+                </div>
               )}
             </div>
           </>
         )}
 
-        <div className="form-buttons" style={{
-          justifyContent: "flex-end"
-        }}>
+        <div
+          className="form-buttons"
+          style={{
+            justifyContent: "flex-end",
+          }}
+        >
           <button
             type="submit"
             className="btn btn-primary primary-custom-btn"

@@ -8,6 +8,8 @@ import {
   query,
   where,
   getDocs,
+  orderBy,
+  limit,
 } from "firebase/firestore";
 import "../styles/PaymentConfirmation.css";
 import { loadScript } from "../helper/loadScript";
@@ -38,26 +40,14 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       setOrderId(userData.orderId);
       setRegistrationId(userData.id);
 
-      // Set primary barcode data if available in userData, otherwise generate it
+      // Set primary barcode data if available in userData
       if (userData.primaryBarcodeId) {
-        setPrimaryBarcodeData(userData.primaryBarcodeId);
-      } else {
-        // Generate a shorter, more compact ID for the primary barcode
-        const shortId =
-          userData.id + generateRandomString(6) + "--" + userData.name;
-        setPrimaryBarcodeData(shortId);
+        setPrimaryBarcodeData(userData?.primaryBarcodeId);
       }
 
       // Set spouse barcode data if user has husband and barcode is available
-      if (userData.hasHusband) {
-        if (userData.spouseBarcodeId) {
-          setSpouseBarcodeData(userData.spouseBarcodeId);
-        } else {
-          // Generate a different barcode for spouse
-          const spouseShortId =
-            userData.id + generateRandomString(6) + "--" + userData.husbandName;
-          setSpouseBarcodeData(spouseShortId);
-        }
+      if (userData.hasHusband && userData.spouseBarcodeId) {
+        setSpouseBarcodeData(userData.spouseBarcodeId);
       }
     }
   }, [userData]);
@@ -75,7 +65,6 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           fontSize: 12, // Smaller font size
           margin: 5, // Smaller margin
           background: "#fff",
-          text: primaryBarcodeData.substring(0, 15), // Show only first part of code for cleaner display
         });
       } catch (error) {
         console.error("Error generating primary barcode:", error);
@@ -94,7 +83,6 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           fontSize: 12,
           margin: 5,
           background: "#fff",
-          text: spouseBarcodeData.substring(0, 15),
         });
       } catch (error) {
         console.error("Error generating spouse barcode:", error);
@@ -105,6 +93,8 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     spouseBarcodeData,
     userData.hasHusband,
     paymentSuccess,
+    spouseBarcodeRef,
+    primaryBarcodeRef,
   ]);
 
   const reactToPrintFn = useReactToPrint({
@@ -144,6 +134,52 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     }
   };
 
+  // Function to get the next barcode number from Firebase
+  const getNextBarcodeNumber = async () => {
+    try {
+      // Query to get the latest registration with a barcode
+      const registrationsRef = collection(db, "registrations");
+      const q = query(
+        registrationsRef,
+        where("primaryBarcodeId", ">=", "B-"), // Look for barcodes starting with B-
+        orderBy("primaryBarcodeId", "desc"), // Order by barcode ID in descending order
+        limit(1) // Get only the latest one
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      // Default starting number if no barcodes exist yet
+      let nextNumber = 1;
+
+      if (!querySnapshot.empty) {
+        // Get the latest barcode ID
+        const latestDoc = querySnapshot.docs[0];
+        const latestBarcodeId = latestDoc.data().primaryBarcodeId;
+
+        // Extract the number part (after "B-")
+        const numberPart = latestBarcodeId.split("-")[1];
+        // Convert to number and increment
+        nextNumber = parseInt(numberPart, 10) + 1;
+      }
+
+      // Format the number with leading zeros (e.g. 00001)
+      const formattedNumber = String(nextNumber).padStart(5, "0");
+
+      return {
+        primaryBarcodeId: `B-${formattedNumber}`,
+        spouseBarcodeId: `D-${formattedNumber}`,
+      };
+    } catch (error) {
+      console.error("Error getting next barcode number:", error);
+      // Fallback to default format with timestamp if there's an error
+      const timestamp = Date.now();
+      return {
+        primaryBarcodeId: `B-${timestamp}`,
+        spouseBarcodeId: `D-${timestamp}`,
+      };
+    }
+  };
+
   // Calculate payment amount based on user data
   const calculateAmount = () => {
     let amount = userData.hasHusband ? 1000 : 500;
@@ -151,7 +187,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     return amount;
   };
 
-  const saveRegistration = async (paymentDetails = {}) => {
+  const saveRegistration = async (paymentDetails = {}, barcodeData = {}) => {
     try {
       // Generate attendee count for barcode
       const attendeeCount = userData.hasHusband ? "2" : "1";
@@ -167,17 +203,24 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         husbandName: userData.husbandName,
         arrivalDate: userData.arrivalDate,
         arrivalTime: userData.arrivalTime,
-        travelMode: userData.travelMode,
+        arrivalTravelMode: userData.arrivalTravelMode,
         departureDate: userData.departureDate,
         departureTime: userData.departureTime,
+        departureTravelMode: userData.departureTravelMode,
         additionalPeople: userData.additionalPeople,
         paymentAmount: calculateAmount(),
         paymentStatus: paymentDetails.status || "failed",
         paymentId: paymentDetails.paymentId || "",
         orderId: paymentDetails.orderId || "",
-        attendeeCount: attendeeCount, // Add attendee count for barcode
+        attendeeCount: attendeeCount,
+        primaryBarcodeId: barcodeData.primaryBarcodeId || "",
         updatedAt: new Date(),
       };
+
+      // Add spouse barcode ID if user has husband
+      if (userData.hasHusband) {
+        registrationData.spouseBarcodeId = barcodeData.spouseBarcodeId || "";
+      }
 
       // Add registrationDate only for new records
       if (!registrationId) {
@@ -213,44 +256,44 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const handlePaymentSuccess = async (paymentDetails) => {
     try {
       console.log("Payment success with registrationId:", registrationId);
-      // Save/update registration in Firebase
-      const regId = await saveRegistration({
-        status: "completed",
-        paymentId: paymentDetails.razorpayPaymentId,
-        orderId: paymentDetails.razorpayOrderId,
-      });
+
+      // Get next barcode numbers
+      const barcodeData = await getNextBarcodeNumber();
+
+      // Save/update registration in Firebase with the barcode data
+      const regId = await saveRegistration(
+        {
+          status: "completed",
+          paymentId: paymentDetails.razorpayPaymentId,
+          orderId: paymentDetails.razorpayOrderId,
+        },
+        barcodeData
+      );
 
       setPaymentId(paymentDetails.razorpayPaymentId);
       setOrderId(paymentDetails.razorpayOrderId);
       setPaymentSuccess(true);
       setPaymentFailed(false);
 
-      // Generate primary barcode data
-      const primaryShortId =
-        regId + generateRandomString(6) + "--" + userData.name;
-      setPrimaryBarcodeData(primaryShortId);
-
-      // Generate spouse barcode data if user has husband
-      let spouseShortId = "";
+      // Set barcode data for display
+      setPrimaryBarcodeData(barcodeData.primaryBarcodeId);
       if (userData.hasHusband) {
-        spouseShortId =
-          regId + generateRandomString(6) + "--" + userData.husbandName;
-        setSpouseBarcodeData(spouseShortId);
+        setSpouseBarcodeData(barcodeData.spouseBarcodeId);
       }
 
-      // Update the payment status
+      // Update the payment status and user data
       const updatedData = {
         paymentStatus: "completed",
         paymentAmount: calculateAmount(),
         paymentId: paymentDetails.razorpayPaymentId,
         orderId: paymentDetails.razorpayOrderId,
         id: regId,
-        primaryBarcodeId: primaryShortId,
+        primaryBarcodeId: barcodeData.primaryBarcodeId,
       };
 
       // Add spouse barcode ID if exists
       if (userData.hasHusband) {
-        updatedData.spouseBarcodeId = spouseShortId;
+        updatedData.spouseBarcodeId = barcodeData.spouseBarcodeId;
       }
 
       updateUserData(updatedData);
@@ -265,34 +308,10 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     }
   };
 
-  // Helper function to generate random string for barcode
-  const generateRandomString = (length) => {
-    const characters =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(
-        Math.floor(Math.random() * characters.length)
-      );
-    }
-    return result;
-  };
-
   const handlePaymentFailure = async (error) => {
     setProcessing(false);
     setPaymentFailed(true);
     setPaymentSuccess(false);
-
-    // try {
-    //   console.log("Payment failed with registrationId:", registrationId);
-    //   // Save/update registration but mark as failed
-    //   await saveRegistration({
-    //     status: "failed",
-    //   });
-    //   // Note: We don't need to setRegistrationId here anymore as it's set in saveRegistration
-    // } catch (saveError) {
-    //   console.error("Error saving failed payment registration:", saveError);
-    // }
 
     setError(
       `भुगतान असफल: ${error.description || error.message || "अज्ञात त्रुटि"}`
@@ -367,7 +386,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
         const paymentObject = new window.Razorpay(options);
         paymentObject.on("payment.failed", function (response) {
-          // handlePaymentFailure(response.error);
+          handlePaymentFailure(response.error);
         });
         paymentObject.open();
       }
@@ -381,7 +400,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const PaymentSuccessView = () => (
     <div className="payment-success" ref={receiptRef}>
       <div className="receipt-header">
-        <h2>BETI TERAPANTH KI</h2>
+        <h2>बेटी तेरापंथ की</h2>
         <p>Payment Receipt</p>
       </div>
 
@@ -389,7 +408,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         <i className="fas fa-check-circle"></i>
       </div>
 
-      <h3>पंजीकरण सफल!</h3>
+      <h3>पंजीकरण सफल</h3>
       <p>आपका पंजीकरण सफलतापूर्वक हो गया है।</p>
 
       <div className="download-options" id="hideOnPrint">
@@ -403,12 +422,16 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
       {/* Primary Barcode Section */}
       <div className="barcode-section" id="hideOnPrint">
-        <h4>प्राथमिक आवेदक का प्रवेश बारकोड</h4>
+        <h4>प्रवेश पत्र : बेटी</h4>
         <div className="barcode-container" id="hideOnPrint">
           <svg ref={primaryBarcodeRef} className="barcode-svg"></svg>
         </div>
         <div className="barcode-info">
           <p>नाम: {userData.name}</p>
+          <p>मोबाइल: {userData.phoneNumber}</p>
+          <p>शहर: {userData.city}</p>
+          <p>राज्य: {userData.state}</p>
+          <p>बारकोड: {primaryBarcodeData}</p>
         </div>
         <button
           className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
@@ -425,12 +448,16 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           className="barcode-section spouse-barcode-section"
           id="hideOnPrint"
         >
-          <h4>जीवनसाथी का प्रवेश बारकोड</h4>
+          <h4>प्रवेश पत्र : दामाद</h4>
           <div className="barcode-container">
             <svg ref={spouseBarcodeRef} className="barcode-svg"></svg>
           </div>
           <div className="barcode-info">
             <p>नाम: {userData.husbandName}</p>
+            <p>मोबाइल: {userData.phoneNumber}</p>
+            <p>शहर: {userData.city}</p>
+            <p>राज्य: {userData.state}</p>
+            <p>बारकोड: {spouseBarcodeData}</p>
           </div>
           <button
             className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
@@ -489,8 +516,13 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         </div>
 
         <div className="detail-item">
-          <span>यात्रा माध्यम:</span>
-          <span>{userData.travelMode}</span>
+          <span> आगमन यात्रा माध्यम:</span>
+          <span>{userData.arrivalTravelMode}</span>
+        </div>
+
+        <div className="detail-item">
+          <span> प्रस्थान यात्रा माध्यम:</span>
+          <span>{userData.departureTravelMode}</span>
         </div>
 
         <div className="detail-item payment-details">
@@ -515,7 +547,9 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       </div>
 
       <div className="additional-info">
-        <p>कृपया इस पंजीकरण आईडी को सहेज कर रखें।</p>
+        <p>
+          कृपया इसे सुरक्षित रखें, सम्मेलन के रजिस्ट्रेशन दौरान यह उपयोगी होगा।
+        </p>
         <p>महत्वपूर्ण अपडेट्स के लिए अपने मोबाइल फोन पर नज़र रखें।</p>
       </div>
 

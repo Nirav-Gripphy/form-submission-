@@ -6,7 +6,8 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
   const [localData, setLocalData] = useState({
     arrivalDate: userData.arrivalDate || "",
     arrivalTime: userData.arrivalTime || "",
-    travelMode: userData.travelMode || "",
+    arrivalTravelMode: userData.arrivalTravelMode || "",
+    departureTravelMode: userData.departureTravelMode || "",
     departureDate: userData.departureDate || "",
     departureTime: userData.departureTime || "",
   });
@@ -79,8 +80,11 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
       newErrors.departureDate = "प्रस्थान तिथि आवश्यक है";
     if (!localData.departureTime)
       newErrors.departureTime = "प्रस्थान समय आवश्यक है";
-    if (!localData.travelMode)
-      newErrors.travelMode = "यात्रा का माध्यम आवश्यक है";
+    if (!localData.arrivalTravelMode)
+      newErrors.arrivalTravelMode = "आगमन यात्रा का माध्यम आवश्यक है";
+
+    if (!localData.departureTravelMode)
+      newErrors.departureTravelMode = "प्रस्थान यात्रा का माध्यम आवश्यक है";
 
     // Date-time logical validation
     if (localData.arrivalDate && localData.departureDate) {
@@ -108,7 +112,6 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log("name vakue", name, value);
 
     setLocalData((prev) => ({
       ...prev,
@@ -133,15 +136,20 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
     updateUserData({
       arrivalDate: localData.arrivalDate,
       arrivalTime: localData.arrivalTime,
-      travelMode: localData.travelMode,
+      arrivalTravelMode: localData.arrivalTravelMode,
       departureDate: localData.departureDate,
       departureTime: localData.departureTime,
+      departureTravelMode: localData.departureTravelMode,
     });
 
     nextStep();
   };
 
-  console.log("errors 0000000", errors);
+  const travelModes = [
+    { value: "Flight", label: "Flight/विमान" },
+    { value: "Train", label: "Train/रेल" },
+    { value: "Car", label: "Car/कार" },
+  ];
 
   return (
     <div className="traveling-info-container">
@@ -199,59 +207,36 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
         </div>
 
         <div className="form-group">
-          <label className="isRequired">Traveling Mode/यात्रा का माध्यम</label>
+          <label className="isRequired">
+            Arrival Traveling Mode/आगमन यात्रा का माध्यम
+          </label>
           <div
             className={`travel-mode-options  ${
-              errors.travelMode ? "is-invalid" : ""
+              errors.arrivalTravelMode ? "is-invalid" : ""
             }`}
           >
-            <div className="form-check form-check-inline">
-              <input
-                type="radio"
-                className="form-check-input"
-                id="flightMode"
-                name="travelMode"
-                value="Flight"
-                checked={localData.travelMode === "Flight"}
-                onChange={handleInputChange}
-              />
-              <label className="form-check-label" htmlFor="flightMode">
-                Flight/विमान
-              </label>
-            </div>
-
-            <div className="form-check form-check-inline">
-              <input
-                type="radio"
-                className="form-check-input"
-                id="trainMode"
-                name="travelMode"
-                value="Train"
-                checked={localData.travelMode === "Train"}
-                onChange={handleInputChange}
-              />
-              <label className="form-check-label" htmlFor="trainMode">
-                Train/रेल
-              </label>
-            </div>
-
-            <div className="form-check form-check-inline">
-              <input
-                type="radio"
-                className="form-check-input"
-                id="carMode"
-                name="travelMode"
-                value="Car"
-                checked={localData.travelMode === "Car"}
-                onChange={handleInputChange}
-              />
-              <label className="form-check-label" htmlFor="carMode">
-                Car/कार
-              </label>
-            </div>
+            {travelModes.map((mode) => (
+              <div className="form-check form-check-inline" key={mode.value}>
+                <input
+                  type="radio"
+                  className="form-check-input"
+                  id={`Arrival${mode.value}Mode`}
+                  name="arrivalTravelMode"
+                  value={mode.value}
+                  checked={localData.arrivalTravelMode === mode.value}
+                  onChange={handleInputChange}
+                />
+                <label
+                  className="form-check-label"
+                  htmlFor={`${mode.value}Mode`}
+                >
+                  {mode.label}
+                </label>
+              </div>
+            ))}
           </div>
-          {errors.travelMode && (
-            <div className="invalid-feedback">{errors.travelMode}</div>
+          {errors.arrivalTravelMode && (
+            <div className="invalid-feedback">{errors.arrivalTravelMode}</div>
           )}
         </div>
 
@@ -308,6 +293,40 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
           />
           {errors.departureTime && (
             <div className="invalid-feedback">{errors.departureTime}</div>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label className="isRequired">
+            Departure Traveling Mode/प्रस्थान यात्रा का माध्यम
+          </label>
+          <div
+            className={`travel-mode-options  ${
+              errors.departureTravelMode ? "is-invalid" : ""
+            }`}
+          >
+            {travelModes.map((mode) => (
+              <div className="form-check form-check-inline" key={mode.value}>
+                <input
+                  type="radio"
+                  className="form-check-input"
+                  id={`Departure${mode.value}Mode`}
+                  name="departureTravelMode"
+                  value={mode.value}
+                  checked={localData.departureTravelMode === mode.value}
+                  onChange={handleInputChange}
+                />
+                <label
+                  className="form-check-label"
+                  htmlFor={`${mode.value}Mode`}
+                >
+                  {mode.label}
+                </label>
+              </div>
+            ))}
+          </div>
+          {errors.departureTravelMode && (
+            <div className="invalid-feedback">{errors.departureTravelMode}</div>
           )}
         </div>
 

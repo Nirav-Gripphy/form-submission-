@@ -21,7 +21,8 @@ const RegistrationForm = ({ db, storage }) => {
     husbandName: "",
     arrivalDate: "",
     arrivalTime: "",
-    travelMode: "",
+    arrivalTravelMode: "",
+    departureTravelMode: "",
     departureDate: "",
     departureTime: "",
     additionalPeople: [],
@@ -248,6 +249,19 @@ const RegistrationForm = ({ db, storage }) => {
           </div>
 
           {step > 0 && <ProgressBar currentStep={step} totalSteps={4} />}
+
+          {step === 0 && (
+            <div className="mt-3 text-center">
+              <h4
+                className=""
+                style={{
+                  fontWeight: 600,
+                }}
+              >
+                तृतीय सम्मलेन रजिस्ट्रेशन
+              </h4>
+            </div>
+          )}
 
           <div className="form-content">{renderStep()}</div>
         </div>
