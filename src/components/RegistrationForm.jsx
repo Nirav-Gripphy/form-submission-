@@ -260,6 +260,7 @@ const RegistrationForm = ({ db, storage }) => {
               >
                 तृतीय सम्मलेन रजिस्ट्रेशन
               </h4>
+              <span>26- 27 जुलाई 2025 </span>
             </div>
           )}
 
