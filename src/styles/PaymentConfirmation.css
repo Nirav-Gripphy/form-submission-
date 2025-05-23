@@ -389,6 +389,7 @@
 #barcode > g > text {
   font: 16px monospace !important;
   font-weight: 600 !important;
+  fill: #b20f08 !important;
 }
 
 @media print {

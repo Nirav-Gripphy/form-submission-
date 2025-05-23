@@ -84,7 +84,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
 
   return (
     <div className="additional-people-container">
-      <h3 className="form-section-title">Add Guest</h3>
+      <h3 className="form-section-title">Add Guests</h3>
       <p className="additional-info">
         यदि बच्चे और सास-ससुर में से कोई साथ आना चाहें तो सम्बन्ध के साथ उनका
         नमोल्लेख करें।
