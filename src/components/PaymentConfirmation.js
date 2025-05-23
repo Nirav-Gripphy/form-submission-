@@ -30,8 +30,12 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const [primaryBarcodeData, setPrimaryBarcodeData] = useState("");
   const [spouseBarcodeData, setSpouseBarcodeData] = useState("");
   const receiptRef = useRef(null);
+  const primaryBarcodeImageRef = useRef(null);
+  const spouseBarcodeImageRef = useRef(null);
   const primaryBarcodeRef = useRef(null);
+  const primaryBarcodePrintRef = useRef(null);
   const spouseBarcodeRef = useRef(null);
+  const spouseBarcodePrintRef = useRef(null);
 
   useEffect(() => {
     if (userData.paymentStatus === "completed") {
@@ -66,6 +70,16 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           margin: 5, // Smaller margin
           background: "#fff",
         });
+        JsBarcode(primaryBarcodePrintRef.current, primaryBarcodeData, {
+          format: "CODE128",
+          lineColor: "#000",
+          width: 1.5, // Reduced width
+          height: 50, // Reduced height
+          displayValue: true,
+          fontSize: 12, // Smaller font size
+          margin: 5, // Smaller margin
+          background: "#fff",
+        });
       } catch (error) {
         console.error("Error generating primary barcode:", error);
       }
@@ -75,6 +89,16 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     if (userData.hasHusband && spouseBarcodeData && spouseBarcodeRef.current) {
       try {
         JsBarcode(spouseBarcodeRef.current, spouseBarcodeData, {
+          format: "CODE128",
+          lineColor: "#000",
+          width: 1.5,
+          height: 50,
+          displayValue: true,
+          fontSize: 12,
+          margin: 5,
+          background: "#fff",
+        });
+        JsBarcode(spouseBarcodePrintRef.current, spouseBarcodeData, {
           format: "CODE128",
           lineColor: "#000",
           width: 1.5,
@@ -99,6 +123,13 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
   const reactToPrintFn = useReactToPrint({
     contentRef: receiptRef,
+  });
+
+  const reactToPrintPrimaryPassFn = useReactToPrint({
+    contentRef: primaryBarcodeImageRef,
+  });
+  const reactToPrintSpousePassFn = useReactToPrint({
+    contentRef: spouseBarcodeImageRef,
   });
 
   const downloadBarcode = (barcodeRef, registrationId, type) => {
@@ -440,187 +471,251 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
   // Payment Success View
   const PaymentSuccessView = () => (
-    <div className="payment-success" ref={receiptRef}>
-      <div className="receipt-header">
-        <h2>बेटी तेरापंथ की</h2>
-        <p>Payment Receipt</p>
-      </div>
+    <>
+      <div className="">
+        <div className="payment-success" ref={receiptRef}>
+          <div className="receipt-header">
+            <h2>बेटी तेरापंथ की</h2>
+            <p>Payment Receipt</p>
+          </div>
+          <div className="success-icon">
+            <i className="fas fa-check-circle"></i>
+          </div>
+          <h3>पंजीकरण सफल</h3>
+          <p>आपका पंजीकरण सफलतापूर्वक हो गया है।</p>
+          <div className="download-options" id="hideOnPrint">
+            <button
+              className="btn btn-primary download-btn primary-custom-btn"
+              onClick={reactToPrintFn}
+            >
+              <i className="fas fa-download"></i> रसीद डाउनलोड करें
+            </button>
+          </div>
+          <div className="registration-details">
+            <div className="detail-item">
+              <span>पंजीकरण आईडी:</span>
+              <span>{registrationId}</span>
+            </div>
 
-      <div className="success-icon">
-        <i className="fas fa-check-circle"></i>
-      </div>
+            <div className="detail-item">
+              <span>नाम:</span>
+              <span>{userData.name}</span>
+            </div>
 
-      <h3>पंजीकरण सफल</h3>
-      <p>आपका पंजीकरण सफलतापूर्वक हो गया है।</p>
+            <div className="detail-item">
+              <span>मोबाइल:</span>
+              <span>{userData.phoneNumber}</span>
+            </div>
 
-      <div className="download-options" id="hideOnPrint">
-        <button
-          className="btn btn-primary download-btn primary-custom-btn"
-          onClick={reactToPrintFn}
-        >
-          <i className="fas fa-download"></i> रसीद डाउनलोड करें
-        </button>
-      </div>
+            <div className="detail-item">
+              <span>स्थान:</span>
+              <span>
+                {userData.city}, {userData.state}
+              </span>
+            </div>
 
-      {/* Primary Barcode Section */}
-      <div className="barcode-section" id="hideOnPrint">
-        <h4>प्रवेश पत्र : बेटी</h4>
-        <div className="barcode-container" id="hideOnPrint">
-          <svg ref={primaryBarcodeRef} className="barcode-svg"></svg>
+            {userData.hasHusband && (
+              <div className="detail-item">
+                <span>जीवनसाथी:</span>
+                <span>{userData.husbandName}</span>
+              </div>
+            )}
+
+            <div className="detail-item">
+              <span>आगमन:</span>
+              <span>
+                {new Date(userData?.arrivalDate)?.toDateString()} -{" "}
+                {userData.arrivalTime}
+              </span>
+            </div>
+
+            <div className="detail-item">
+              <span>प्रस्थान:</span>
+              <span>
+                {new Date(userData?.departureDate)?.toDateString()} -{" "}
+                {userData.departureTime}
+              </span>
+            </div>
+
+            <div className="detail-item">
+              <span> आगमन यात्रा माध्यम:</span>
+              <span>{userData.arrivalTravelMode}</span>
+            </div>
+
+            <div className="detail-item">
+              <span> प्रस्थान यात्रा माध्यम:</span>
+              <span>{userData.departureTravelMode}</span>
+            </div>
+
+            <div className="detail-item payment-details">
+              <span>भुगतान राशि:</span>
+              <span>₹{calculateAmount()}</span>
+            </div>
+
+            <div className="detail-item">
+              <span>भुगतान आईडी:</span>
+              <span>{paymentId}</span>
+            </div>
+
+            <div className="detail-item">
+              <span>ऑर्डर आईडी:</span>
+              <span>{orderId}</span>
+            </div>
+
+            <div className="detail-item">
+              <span>दिनांक:</span>
+              <span>{new Date().toDateString()}</span>
+            </div>
+          </div>
+          <div className="additional-info">
+            <p className="mb-0">
+              कृपया इसे सुरक्षित रखें, सम्मेलन के रजिस्ट्रेशन दौरान यह उपयोगी
+              होगा।
+            </p>
+          </div>
+          <div className="footer-note">
+            <p>धन्यवाद!</p>
+          </div>
+          {/* Primary Barcode Section */}
+          <div className="barcode-section" id="hideOnPrint">
+            <h4>प्रवेश पत्र : बेटी</h4>
+            <div className="barcode-container" id="hideOnPrint">
+              <svg ref={primaryBarcodeRef} className="barcode-svg"></svg>
+            </div>
+            <div className="barcode-info">
+              <p>नाम: {userData.name}</p>
+              <p>मोबाइल: {userData.phoneNumber}</p>
+              <p>शहर: {userData.city}</p>
+              <p>राज्य: {userData.state}</p>
+              <p>राज्य: {userData.state}</p>
+              <p>बारकोड: {primaryBarcodeData}</p>
+              <p>`जीवनसाथी के साथ: {userData.hasHusband ? "हाँ" : "नहीं"}</p>
+            </div>
+            <button
+              className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
+              onClick={reactToPrintPrimaryPassFn}
+              id="hideOnPrint"
+            >
+              <i className="fas fa-qrcode"></i> प्रवेश पत्र डाउनलोड करें
+            </button>
+
+            <span
+              style={{
+                fontSize: "10px",
+              }}
+            >
+              कृपया इसे सुरक्षित रखें, सम्मेलन के दौरान यह उपयोगी होगा।
+            </span>
+          </div>
+          {/* Spouse Barcode Section - Only show if user has spouse */}
+          {userData.hasHusband && (
+            <div
+              className="barcode-section spouse-barcode-section"
+              id="hideOnPrint"
+            >
+              <h4>प्रवेश पत्र : दामाद</h4>
+              <div className="barcode-container">
+                <svg ref={spouseBarcodeRef} className="barcode-svg"></svg>
+              </div>
+              <div className="barcode-info">
+                <p>नाम: {userData.husbandName}</p>
+                <p>मोबाइल: {userData.phoneNumber}</p>
+                <p>शहर: {userData.city}</p>
+                <p>राज्य: {userData.state}</p>
+                <p>बारकोड: {spouseBarcodeData}</p>
+              </div>
+              <button
+                className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
+                // onClick={() =>
+                //   downloadBarcode(spouseBarcodeRef, userData.spouseBarcodeId)
+                // }
+                onClick={reactToPrintSpousePassFn}
+                id="hideOnPrint"
+              >
+                <i className="fas fa-qrcode"></i> प्रवेश पत्र डाउनलोड करें
+              </button>
+              <span
+                style={{
+                  fontSize: "10px",
+                }}
+              >
+                कृपया इसे सुरक्षित रखें, सम्मेलन के दौरान यह उपयोगी होगा।
+              </span>
+            </div>
+          )}
         </div>
-        <div className="barcode-info">
-          <p>नाम: {userData.name}</p>
-          <p>मोबाइल: {userData.phoneNumber}</p>
-          <p>शहर: {userData.city}</p>
-          <p>राज्य: {userData.state}</p>
-          <p>राज्य: {userData.state}</p>
-          <p>बारकोड: {primaryBarcodeData}</p>
-          <p>`जीवनसाथी के साथ: {userData.hasHusband ? "हाँ" : "नहीं"}</p>
-        </div>
-        <button
-          className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
-          onClick={() =>
-            downloadBarcode(primaryBarcodeRef, userData.primaryBarcodeId, true)
-          }
-          id="hideOnPrint"
-        >
-          <i className="fas fa-qrcode"></i> बारकोड डाउनलोड करें
-        </button>
-
-        <span
-          style={{
-            fontSize: "10px",
-          }}
-        >
-          कृपया इसे सुरक्षित रखें, सम्मेलन के दौरान यह उपयोगी होगा।
-        </span>
       </div>
 
-      {/* Spouse Barcode Section - Only show if user has spouse */}
-      {userData.hasHusband && (
-        <div
-          className="barcode-section spouse-barcode-section"
-          id="hideOnPrint"
-        >
-          <h4>प्रवेश पत्र : दामाद</h4>
+      {/* pass Template for normal users */}
+      <div className="entry-card d-none" ref={primaryBarcodeImageRef}>
+        <div className="entry-card-inner">
+          <div className="entry-card-header">
+            <img
+              style={{
+                width: "60%",
+              }}
+              src="./beti-terapanth-ki-logo.png"
+              alt="Logo"
+              className="logo"
+            />
+          </div>
+          <div className="entry-card-heading">प्रवेश पत्र</div>
+          <div className="entry-card-details">
+            नाम : {userData.name}
+            <br />
+            मोबाइल : {userData.phoneNumber}
+            <br />
+            शहर : {userData.city}
+            <br />
+            राज्य : {userData.state}
+            <br />
+            जीवनसाथी के साथ : {userData.hasHusband ? "हाँ" : "नहीं"}
+          </div>
           <div className="barcode-container">
-            <svg ref={spouseBarcodeRef} className="barcode-svg"></svg>
+            <svg
+              id="barcode"
+              ref={primaryBarcodePrintRef}
+              className="barcode-svg"
+            ></svg>
           </div>
-          <div className="barcode-info">
-            <p>नाम: {userData.husbandName}</p>
-            <p>मोबाइल: {userData.phoneNumber}</p>
-            <p>शहर: {userData.city}</p>
-            <p>राज्य: {userData.state}</p>
-            <p>बारकोड: {spouseBarcodeData}</p>
+        </div>
+      </div>
+
+      {/* Pass Template for hasbusd if exist */}
+      {userData.hasHusband && (
+        <div className="entry-card d-none" ref={spouseBarcodeImageRef}>
+          <div className="entry-card-inner">
+            <div className="entry-card-header">
+              <img
+                style={{
+                  width: "60%",
+                }}
+                src="./beti-terapanth-ki-logo.png"
+                alt="Logo"
+                className="logo"
+              />
+            </div>
+            <div className="entry-card-heading">प्रवेश पत्र</div>
+            <div className="entry-card-details">
+              नाम : {userData.husbandName}
+              <br />
+              मोबाइल : {userData.phoneNumber}
+              <br />
+              शहर : {userData.city}
+              <br />
+              राज्य : {userData.state}
+            </div>
+            <div className="barcode-container">
+              <svg
+                id="barcode"
+                ref={spouseBarcodePrintRef}
+                className="barcode-svg"
+              ></svg>
+            </div>
           </div>
-          <button
-            className="btn btn-outline-primary barcode-download-btn primary-custom-btn"
-            onClick={() =>
-              downloadBarcode(spouseBarcodeRef, userData.spouseBarcodeId)
-            }
-            id="hideOnPrint"
-          >
-            <i className="fas fa-qrcode"></i> बारकोड डाउनलोड करें
-          </button>
-          <span
-            style={{
-              fontSize: "10px",
-            }}
-          >
-            {" "}
-            कृपया इसे सुरक्षित रखें, सम्मेलन के दौरान यह उपयोगी होगा।
-          </span>
         </div>
       )}
-
-      <div className="registration-details">
-        <div className="detail-item">
-          <span>पंजीकरण आईडी:</span>
-          <span>{registrationId}</span>
-        </div>
-
-        <div className="detail-item">
-          <span>नाम:</span>
-          <span>{userData.name}</span>
-        </div>
-
-        <div className="detail-item">
-          <span>मोबाइल:</span>
-          <span>{userData.phoneNumber}</span>
-        </div>
-
-        <div className="detail-item">
-          <span>स्थान:</span>
-          <span>
-            {userData.city}, {userData.state}
-          </span>
-        </div>
-
-        {userData.hasHusband && (
-          <div className="detail-item">
-            <span>जीवनसाथी:</span>
-            <span>{userData.husbandName}</span>
-          </div>
-        )}
-
-        <div className="detail-item">
-          <span>आगमन:</span>
-          <span>
-            {new Date(userData?.arrivalDate)?.toDateString()} -{" "}
-            {userData.arrivalTime}
-          </span>
-        </div>
-
-        <div className="detail-item">
-          <span>प्रस्थान:</span>
-          <span>
-            {new Date(userData?.departureDate)?.toDateString()} -{" "}
-            {userData.departureTime}
-          </span>
-        </div>
-
-        <div className="detail-item">
-          <span> आगमन यात्रा माध्यम:</span>
-          <span>{userData.arrivalTravelMode}</span>
-        </div>
-
-        <div className="detail-item">
-          <span> प्रस्थान यात्रा माध्यम:</span>
-          <span>{userData.departureTravelMode}</span>
-        </div>
-
-        <div className="detail-item payment-details">
-          <span>भुगतान राशि:</span>
-          <span>₹{calculateAmount()}</span>
-        </div>
-
-        <div className="detail-item">
-          <span>भुगतान आईडी:</span>
-          <span>{paymentId}</span>
-        </div>
-
-        <div className="detail-item">
-          <span>ऑर्डर आईडी:</span>
-          <span>{orderId}</span>
-        </div>
-
-        <div className="detail-item">
-          <span>दिनांक:</span>
-          <span>{new Date().toDateString()}</span>
-        </div>
-      </div>
-
-      <div className="additional-info">
-        <p>
-          कृपया इसे सुरक्षित रखें, सम्मेलन के रजिस्ट्रेशन दौरान यह उपयोगी होगा।
-        </p>
-        <p>महत्वपूर्ण अपडेट्स के लिए अपने मोबाइल फोन पर नज़र रखें।</p>
-      </div>
-
-      <div className="footer-note">
-        <p>धन्यवाद!</p>
-      </div>
-    </div>
+    </>
   );
 
   // Payment Failed View
