@@ -8,6 +8,7 @@ import AdditionalPeople from "./AdditionalPeople";
 import PaymentConfirmation from "./PaymentConfirmation";
 import ProgressBar from "./ProgressBar";
 import "../styles/RegistrationForm.css";
+import { NoRegistation } from "./NoRegistation";
 
 const RegistrationForm = ({ db, storage }) => {
   const [step, setStep] = useState(0);
@@ -89,8 +90,12 @@ const RegistrationForm = ({ db, storage }) => {
         setStep(1); // Step for partial users
       } else {
         // Step 3: Not found anywhere — redirect
-        const googleFormUrl = process.env.REACT_APP_GOOGLE_FORM;
-        window.location.href = googleFormUrl;
+        // const googleFormUrl = process.env.REACT_APP_GOOGLE_FORM;
+        // window.location.href = googleFormUrl;
+        setStep(5);
+        setUserData((prevData) => ({
+          phoneNumber,
+        }));
       }
     } catch (error) {
       console.error("Error checking user:", error);
@@ -205,6 +210,14 @@ const RegistrationForm = ({ db, storage }) => {
             prevStep={prevStep}
           />
         );
+      case 5:
+        return (
+          <NoRegistation
+            userData={userData}
+            updateUserData={updateUserData}
+            prevStep={prevStep}
+          />
+        );
       default:
         return (
           <PhoneInput
@@ -248,7 +261,9 @@ const RegistrationForm = ({ db, storage }) => {
             />
           </div>
 
-          {step > 0 && <ProgressBar currentStep={step} totalSteps={4} />}
+          {step > 0 && step !== 5 && (
+            <ProgressBar currentStep={step} totalSteps={4} />
+          )}
 
           {step === 0 && (
             <div className="mt-3 text-center">
