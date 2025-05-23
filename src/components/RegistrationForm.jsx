@@ -70,7 +70,7 @@ const RegistrationForm = ({ db, storage }) => {
       // Step 2: Check in 'users' collection
       const userQuery = query(
         collection(db, "users"),
-        where("contact_no", "==", phoneNumber)
+        where("Contact No", "==", Number(phoneNumber))
       );
       const userSnapshot = await getDocs(userQuery);
 
@@ -79,11 +79,12 @@ const RegistrationForm = ({ db, storage }) => {
 
         setUserData((prevData) => ({
           ...prevData,
-          name: userData.name || "",
-          city: userData.city || "",
-          state: userData.state || "",
+          name: userData.Name || "",
+          city: userData.City || "",
+          state: userData.State || "",
           phoneNumber,
           photoURL: userData.photoURL || "",
+          husbandName: userData[`Husband's Name`],
         }));
 
         setUserExists(true);
