@@ -14,7 +14,7 @@ export const NoRegistation = ({ userData }) => {
             // target="_blank"
             href={process.env.REACT_APP_GOOGLE_FORM}
           >
-            Registster Now
+            Registster Now / रजिस्ट्रेशन करें
           </a>
         </div>
       </div>
