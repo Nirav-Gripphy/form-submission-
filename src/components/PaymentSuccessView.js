@@ -189,7 +189,7 @@ export const PaymentSuccessView = ({
       </div>
 
       {/* pass Template for normal users */}
-      <div className="entry-card d-none mt-5" ref={primaryBarcodeImageRef}>
+      <div className="entry-card d-none " ref={primaryBarcodeImageRef}>
         <div className="entry-card-inner">
           <div className="entry-card-header">
             <img
@@ -225,7 +225,7 @@ export const PaymentSuccessView = ({
 
       {/* Pass Template for hasbusd if exist */}
       {userData.hasHusband && (
-        <div className="entry-card d-none  mt-5" ref={spouseBarcodeImageRef}>
+        <div className="entry-card d-none " ref={spouseBarcodeImageRef}>
           <div className="entry-card-inner">
             <div className="entry-card-header">
               <img

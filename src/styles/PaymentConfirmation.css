@@ -402,9 +402,32 @@
     display: none !important;
   }
   .entry-card {
-    width: 300px;
+    width: 210mm;
+    height: 297mm;
   }
   .footer-note {
     margin-bottom: 200px;
+  }
+  .entry-card-inner {
+    width: 100%;
+    height: 100%;
+  }
+  .entry-card-header {
+    height: 100mm;
+    width: 50%;
+  }
+
+  .entry-card-heading {
+    font-size: 50px;
+  }
+
+  .entry-card-details {
+    font-size: 35px;
+  }
+
+  #barcode {
+    margin-top: 50px;
+    width: 100%;
+    height: 70mm;
   }
 }
