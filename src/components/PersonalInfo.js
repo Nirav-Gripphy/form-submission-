@@ -163,7 +163,7 @@ const PersonalInfo = ({
         !localData.husbandPhotoFile ||
         !(localData.husbandPhotoFile instanceof File)
       ) {
-        newErrors.husbandPhotoFile = "जीवनसाथी फोटो आवश्यक है";
+        newErrors.husbandPhotoFile = "जीवनसाथी का फोटो आवश्यक है";
       }
     }
 
@@ -520,6 +520,7 @@ const PersonalInfo = ({
                   errors.husbandName ? "is-invalid" : ""
                 }`}
                 id="husbandName"
+                readOnly
                 name="husbandName"
                 value={localData.husbandName}
                 onChange={handleInputChange}

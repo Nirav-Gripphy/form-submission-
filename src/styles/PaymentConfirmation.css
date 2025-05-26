@@ -339,6 +339,7 @@
 .entry-card {
   background-color: #fdeef5;
   padding: 10px;
+  margin: 0 auto;
 }
 
 .entry-card-inner {
@@ -399,5 +400,11 @@
 
   #hideOnPrint {
     display: none !important;
+  }
+  .entry-card {
+    width: 300px;
+  }
+  .footer-note {
+    margin-bottom: 200px;
   }
 }

@@ -87,7 +87,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
       <h3 className="form-section-title">Add Guests</h3>
       <p className="additional-info">
         यदि बच्चे और सास-ससुर में से कोई साथ आना चाहें तो सम्बन्ध के साथ उनका
-        नमोल्लेख करें।
+        नामोल्लेख करें।
       </p>
 
       <form onSubmit={handleSubmit}>
