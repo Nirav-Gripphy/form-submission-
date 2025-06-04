@@ -18,6 +18,8 @@ import { useReactToPrint } from "react-to-print";
 import { db } from "../services/firebase";
 import JsBarcode from "jsbarcode"; // Import JsBarcode library
 import { PaymentSuccessView } from "./PaymentSuccessView";
+import UserPassCard from "./UserPassCard";
+import SpousePassCard from "./SpousePassCard";
 
 const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const [processing, setProcessing] = useState(false);
@@ -457,6 +459,20 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
             spouseBarcodePrintRef={spouseBarcodePrintRef}
           />
         </div>
+
+        <UserPassCard
+          userData={userData}
+          barcodeRef={primaryBarcodePrintRef}
+          cardRef={primaryBarcodeImageRef}
+        />
+
+        {userData.hasHusband && (
+          <SpousePassCard
+            userData={userData}
+            barcodeRef={spouseBarcodePrintRef}
+            cardRef={spouseBarcodeImageRef}
+          />
+        )}
       </div>
     );
   }

@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 // Payment Success View
 export const PaymentSuccessView = ({
   receiptRef,
@@ -22,6 +24,22 @@ export const PaymentSuccessView = ({
     return amount;
   };
 
+  const [isPrintingReceipt, setIsPrintingReceipt] = useState(false);
+
+  const handleReceiptPrint = () => {
+    setIsPrintingReceipt(true); // Hide barcode sections
+
+    // Small delay to ensure state update renders before printing
+    setTimeout(() => {
+      reactToPrintFn(); // Call the original print function
+
+      // Reset state after printing
+      setTimeout(() => {
+        setIsPrintingReceipt(false);
+      }, 100);
+    }, 10);
+  };
+
   return (
     <>
       <div className="">
@@ -38,7 +56,7 @@ export const PaymentSuccessView = ({
           <div className="download-options" id="hideOnPrint">
             <button
               className="btn btn-primary download-btn primary-custom-btn"
-              onClick={reactToPrintFn}
+              onClick={handleReceiptPrint}
             >
               <i className="fas fa-download"></i> रसीद डाउनलोड करें
             </button>
@@ -187,76 +205,6 @@ export const PaymentSuccessView = ({
           )}
         </div>
       </div>
-
-      {/* pass Template for normal users */}
-      <div className="entry-card d-none " ref={primaryBarcodeImageRef}>
-        <div className="entry-card-inner">
-          <div className="entry-card-header">
-            <img
-              style={{
-                width: "60%",
-              }}
-              src="./beti-terapanth-ki-logo.png"
-              alt="Logo"
-              className="logo"
-            />
-          </div>
-          <div className="entry-card-heading">प्रवेश पत्र</div>
-          <div className="entry-card-details">
-            नाम : {userData.name}
-            <br />
-            मोबाइल : {userData.phoneNumber}
-            <br />
-            शहर : {userData.city}
-            <br />
-            राज्य : {userData.state}
-            <br />
-            जीवनसाथी के साथ : {userData.hasHusband ? "हाँ" : "नहीं"}
-          </div>
-          <div className="barcode-container">
-            <svg
-              id="barcode"
-              ref={primaryBarcodePrintRef}
-              className="barcode-svg"
-            ></svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Pass Template for hasbusd if exist */}
-      {userData.hasHusband && (
-        <div className="entry-card d-none " ref={spouseBarcodeImageRef}>
-          <div className="entry-card-inner">
-            <div className="entry-card-header">
-              <img
-                style={{
-                  width: "60%",
-                }}
-                src="./beti-terapanth-ki-logo.png"
-                alt="Logo"
-                className="logo"
-              />
-            </div>
-            <div className="entry-card-heading">प्रवेश पत्र</div>
-            <div className="entry-card-details">
-              नाम : {userData.husbandName}
-              <br />
-              मोबाइल : {userData.phoneNumber}
-              <br />
-              शहर : {userData.city}
-              <br />
-              राज्य : {userData.state}
-            </div>
-            <div className="barcode-container">
-              <svg
-                id="barcode"
-                ref={spouseBarcodePrintRef}
-                className="barcode-svg"
-              ></svg>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };
