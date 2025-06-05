@@ -502,7 +502,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         </div>
 
         <div className="summary-item">
-          <span>City</span>
+          <span>City:</span>
           <span>{[userData?.city, userData?.state].join(", ")}</span>
         </div>
 
