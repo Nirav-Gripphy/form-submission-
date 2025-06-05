@@ -104,10 +104,12 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
         ) : (
           <div className="add-person-form">
             <div className="form-group">
-              <label htmlFor="name">Name/नाम</label>
+              <label htmlFor="name" className="isRequired">
+                Name/नाम
+              </label>
               <input
                 type="text"
-                className={`form-control ${errors.name ? "is-invalid" : ""}`}
+                className={`form-control ${errors.name ? "is-invalid" : ""} `}
                 id="name"
                 name="name"
                 value={newPerson.name}
@@ -120,7 +122,9 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="relation">Relation/संबंध</label>
+              <label htmlFor="relation" className="isRequired">
+                Relation/संबंध
+              </label>
               {/* <input
                 type="text"
                 className={`form-control ${
