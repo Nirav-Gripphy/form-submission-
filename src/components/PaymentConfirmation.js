@@ -199,6 +199,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         city: userData.city,
         state: userData.state,
         photoURL: userData.photoURL,
+        husbandPhotoURL: userData.husbandPhotoURL,
         hasHusband: userData.hasHusband,
         husbandName: userData.husbandName,
         arrivalDate: userData.arrivalDate,
