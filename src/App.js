@@ -26,7 +26,9 @@ import firebase, { db, storage } from "./services/firebase";
 
 function App() {
   return (
-    <Router basename="/registration2025">
+    <Router
+    // basename="/registration2025"
+    >
       <div className="App">
         <Routes>
           <Route
