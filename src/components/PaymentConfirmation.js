@@ -182,7 +182,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
   // Calculate payment amount based on user data
   const calculateAmount = () => {
-    let amount = userData.hasHusband ? 1000 : 500;
+    let amount = userData.hasHusband ? 2 : 1;
     // You could add additional cost calculations here if needed
     return amount;
   };
@@ -490,38 +490,38 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
       <div className="payment-summary">
         <div className="summary-item">
-          <span>Name/नाम:</span>
+          <span>Name:</span>
           <span>{userData.name}</span>
         </div>
 
         <div className="summary-item">
-          <span>M. No/मोबाइल:</span>
+          <span>Mobile:</span>
           <span>{userData.phoneNumber}</span>
         </div>
 
         <div className="summary-item">
-          <span>Place/स्थान:</span>
+          <span>City</span>
           <span>{[userData?.city, userData?.state].join(", ")}</span>
         </div>
 
         {userData.hasHusband && (
           <div className="summary-item">
-            <span>जीवनसाथी:</span>
+            <span>Husband:</span>
             <span>{userData.husbandName}</span>
           </div>
         )}
 
         <div className="summary-item payment-amount">
-          <span>कुल राशि:</span>
+          <span>Total Amount:</span>
           <span>₹{calculateAmount()}</span>
         </div>
 
         <div className="payment-details">
           <h4>Payment Details</h4>
           <p>
-            <strong>Single Registration/एकल पंजीकरण:</strong> ₹500
+            <strong>Single Registration:</strong> ₹500
             <br />
-            <strong>With Spouse/जीवनसाथी के साथ:</strong> ₹1000
+            <strong>With Husband:</strong> ₹1000
           </p>
         </div>
       </div>

@@ -121,7 +121,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
 
             <div className="form-group">
               <label htmlFor="relation">Relation/संबंध</label>
-              <input
+              {/* <input
                 type="text"
                 className={`form-control ${
                   errors.relation ? "is-invalid" : ""
@@ -131,7 +131,25 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
                 value={newPerson.relation}
                 onChange={handleInputChange}
                 placeholder="अतिथि संबंध"
-              />
+              /> */}
+
+              <select
+                className={`form-select ${errors.relation ? "is-invalid" : ""}`}
+                aria-label="Default select example"
+                id="relation"
+                name="relation"
+                value={newPerson.relation}
+                onChange={handleInputChange}
+              >
+                <option value={""} selected>
+                  Select Relation/संबंध
+                </option>
+                <option value="Mother in Law/सास"> Mother in Law/सास</option>
+                <option value="Father in Law /ससुर">Father in Law /ससुर</option>
+                <option value="Son/बेटा">Son/बेटा</option>
+                <option value="Daughter/बेटी"> Daughter/बेटी</option>
+              </select>
+
               {errors.relation && (
                 <div className="invalid-feedback">{errors.relation}</div>
               )}

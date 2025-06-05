@@ -279,7 +279,9 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="departureTime">Departure Time/प्रस्थान समय</label>
+          <label htmlFor="departureTime" className="isRequired">
+            Departure Time/प्रस्थान समय
+          </label>
           <input
             type="time"
             className={`form-control ${
