@@ -5,6 +5,7 @@ import "./App.css";
 import { db, storage } from "./services/firebase";
 import AboutUs from "./page/AboutUs";
 import TermsAndConditions from "./page/TermsAndConditions ";
+import RegistrationList from "./page/RegistrationList";
 
 // Your Firebase configuration
 // const firebaseConfig = {
@@ -35,6 +36,7 @@ function App() {
           />{" "}
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/policy" element={<TermsAndConditions />} />
+          <Route path="/registration-list" element={<RegistrationList />} />
         </Routes>
       </div>
     </Router>

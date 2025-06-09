@@ -358,6 +358,30 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           name: "BETI TERAPANTH KI Registration",
           description: "Registration Payment",
           //   image: { logo },
+          config: {
+            display: {
+              blocks: {
+                banks: {
+                  instruments: [
+                    {
+                      method: "upi",
+                      flows: ["collect"], // Only show collect flow, not QR
+                    },
+                  ],
+                },
+              },
+              hide: [
+                {
+                  method: "upi",
+                  flows: ["qr"], // Hide QR code option
+                },
+              ],
+              sequence: ["block.banks"],
+              preferences: {
+                show_default_blocks: false,
+              },
+            },
+          },
           order_id: order_id,
           handler: async function (response) {
             const paymentDetails = {
