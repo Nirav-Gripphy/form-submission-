@@ -382,6 +382,13 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
               },
             },
           },
+          method: {
+            upi: true,
+            card: true,
+            netbanking: true,
+            wallet: true,
+          },
+
           order_id: order_id,
           handler: async function (response) {
             const paymentDetails = {
