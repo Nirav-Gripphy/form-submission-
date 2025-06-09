@@ -80,13 +80,11 @@ const AboutUs = () => {
             style={{ padding: "20px", textAlign: "left" }}
           >
             <div
-              id="about-event"
+              id="about-us"
               className="about-section"
               style={{ marginBottom: "30px", paddingTop: "20px" }}
             >
-              <h3 style={{ color: "#333", marginBottom: "15px" }}>
-                About the Event
-              </h3>
+              <h3 style={{ color: "#333", marginBottom: "15px" }}>About Us</h3>
               <p
                 style={{
                   lineHeight: "1.6",
@@ -113,12 +111,12 @@ const AboutUs = () => {
             </div>
 
             <div
-              id="registration"
+              id="pricing-details"
               className="pricing-section"
               style={{ marginBottom: "30px", paddingTop: "20px" }}
             >
               <h3 style={{ color: "#333", marginBottom: "15px" }}>
-                Registration Fees
+                Pricing Details
               </h3>
               <div
                 className="pricing-cards"
@@ -218,8 +216,8 @@ const AboutUs = () => {
             </div>
 
             <div
-              id="contact"
-              className="contact-section"
+              id="contact-us"
+              className="contact-us"
               style={{ paddingTop: "20px" }}
             >
               <h3 style={{ color: "#333", marginBottom: "15px" }}>
