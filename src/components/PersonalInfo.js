@@ -122,14 +122,26 @@ const PersonalInfo = ({
   prevStep,
 }) => {
   const [localData, setLocalData] = useState({
-    name: userData.name || "",
-    city: userData.city || "",
-    state: userData.state || "",
-    hasHusband: userData.hasHusband || false,
-    husbandName: userData.husbandName || "",
+    name: "",
+    city: "",
+    state: "",
+    hasHusband: false,
+    husbandName: "",
     photoFile: null,
     husbandPhotoFile: null,
   });
+
+  useEffect(() => {
+    setLocalData({
+      name: userData.name || "",
+      city: userData.city || "",
+      state: userData.state || "",
+      hasHusband: userData.hasHusband || false,
+      husbandName: userData.husbandName || "",
+      photoFile: null,
+      husbandPhotoFile: null,
+    });
+  }, [userData]);
 
   const [previewImage, setPreviewImage] = useState(userData.photoURL || null);
   const [husbandPreviewImage, setHusbandPreviewImage] = useState(
@@ -141,28 +153,28 @@ const PersonalInfo = ({
   const [isHusbandDragging, setIsHusbandDragging] = useState(false);
 
   const validateForm = () => {
-    console.log("localData 00000", localData);
     const newErrors = {};
 
     if (!localData.name.trim()) newErrors.name = "नाम आवश्यक है";
     if (!localData.city.trim()) newErrors.city = "शहर आवश्यक है";
     if (!localData.state.trim()) newErrors.state = "राज्य आवश्यक है";
 
-    // ✅ Check if photoFile is present and is a valid File object
-    if (!localData.photoFile || !(localData.photoFile instanceof File)) {
+    // ✅ FIXED: Check if either photoFile exists OR photoURL exists in userData
+    const hasPhoto = localData.photoFile instanceof File || userData.photoURL;
+    if (!hasPhoto) {
       newErrors.photoFile = "फोटो आवश्यक है";
     }
 
-    // ✅ If hasHusband is true, check husband name and photo file
+    // ✅ FIXED: If hasHusband is true, check husband name and photo
     if (localData.hasHusband) {
       if (!localData.husbandName.trim()) {
         newErrors.husbandName = "जीवनसाथी का नाम आवश्यक है";
       }
 
-      if (
-        !localData.husbandPhotoFile ||
-        !(localData.husbandPhotoFile instanceof File)
-      ) {
+      // Check if either husbandPhotoFile exists OR husbandPhotoURL exists in userData
+      const hasHusbandPhoto =
+        localData.husbandPhotoFile instanceof File || userData.husbandPhotoURL;
+      if (!hasHusbandPhoto) {
         newErrors.husbandPhotoFile = "जीवनसाथी का फोटो आवश्यक है";
       }
     }
@@ -303,10 +315,11 @@ const PersonalInfo = ({
     setUploading(true);
 
     try {
-      // Process photo upload if there's a file
+      // Process photo upload if there's a NEW file
       let photoURL = userData.photoURL;
       let husbandPhotoURL = userData.husbandPhotoURL;
 
+      // Only upload if there's a new file selected
       if (localData.photoFile) {
         photoURL = await handleFileUpload(localData.photoFile);
       }
@@ -322,7 +335,9 @@ const PersonalInfo = ({
         state: localData.state,
         photoURL,
         hasHusband: localData.hasHusband,
-        husbandName: localData.hasHusband ? localData.husbandName : "",
+        husbandName: localData.hasHusband
+          ? localData.husbandName || userData.husbandName
+          : userData.husbandName || "",
         husbandPhotoURL: localData.hasHusband ? husbandPhotoURL : null,
       });
 
@@ -336,6 +351,21 @@ const PersonalInfo = ({
     } finally {
       setUploading(false);
     }
+  };
+
+  // ✅ ADDED: Handle remove photo functionality
+  const handleRemovePhoto = () => {
+    setPreviewImage(null);
+    setLocalData((prev) => ({ ...prev, photoFile: null }));
+    // Also clear from userData if needed
+    updateUserData({ ...userData, photoURL: null });
+  };
+
+  const handleRemoveHusbandPhoto = () => {
+    setHusbandPreviewImage(null);
+    setLocalData((prev) => ({ ...prev, husbandPhotoFile: null }));
+    // Also clear from userData if needed
+    updateUserData({ ...userData, husbandPhotoURL: null });
   };
 
   return (
@@ -463,10 +493,7 @@ const PersonalInfo = ({
                   <button
                     type="button"
                     className="remove-photo-btn"
-                    onClick={() => {
-                      setPreviewImage(null);
-                      setLocalData((prev) => ({ ...prev, photoFile: null }));
-                    }}
+                    onClick={handleRemovePhoto}
                   >
                     <i
                       class="bi bi-trash"
@@ -596,13 +623,7 @@ const PersonalInfo = ({
                       <button
                         type="button"
                         className="remove-photo-btn"
-                        onClick={() => {
-                          setHusbandPreviewImage(null);
-                          setLocalData((prev) => ({
-                            ...prev,
-                            husbandPhotoFile: null,
-                          }));
-                        }}
+                        onClick={handleRemoveHusbandPhoto}
                       >
                         <i
                           class="bi bi-trash"
