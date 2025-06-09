@@ -182,7 +182,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
   // Calculate payment amount based on user data
   const calculateAmount = () => {
-    let amount = userData.hasHusband ? 1000 : 500;
+    let amount = userData.hasHusband ? 2 : 1;
     // Testing////
     // You could add additional cost calculations here if needed
     return amount;
