@@ -240,7 +240,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         // Create a new registration
         console.log("Creating new registration");
         const registrationRef = await addDoc(
-          collection(db, "registrations"),
+          collection(db, "registrations-temp"),
           registrationData
         );
         regId = registrationRef.id;

@@ -43,7 +43,7 @@ const RegistrationForm = ({ db, storage }) => {
     try {
       // Step 1: Check in 'registration' collection
       const registrationQuery = query(
-        collection(db, "registrations"),
+        collection(db, "registrations-temp"),
         where("phoneNumber", "==", phoneNumber)
       );
       const registrationSnapshot = await getDocs(registrationQuery);
