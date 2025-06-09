@@ -358,35 +358,49 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           name: "BETI TERAPANTH KI Registration",
           description: "Registration Payment",
           //   image: { logo },
+          // Enable all methods
+          method: {
+            card: true,
+            netbanking: true,
+            wallet: true,
+            upi: true,
+            emi: false,
+            paylater: false,
+          },
+
+          // Configure UPI to hide QR but show collect
           config: {
             display: {
               blocks: {
-                banks: {
+                utib: {
+                  name: "UPI",
                   instruments: [
                     {
                       method: "upi",
-                      flows: ["collect"], // Only show collect flow, not QR
+                      flows: ["collect", "intent"], // Show UPI apps but not QR
                     },
+                  ],
+                },
+                banks: {
+                  name: "Other Payment Methods",
+                  instruments: [
+                    { method: "card" },
+                    { method: "netbanking" },
+                    { method: "wallet" },
                   ],
                 },
               },
               hide: [
                 {
                   method: "upi",
-                  flows: ["qr"], // Hide QR code option
+                  flows: ["qr"], // Hide QR code specifically
                 },
               ],
-              sequence: ["block.banks"],
+              sequence: ["block.utib", "block.banks"],
               preferences: {
                 show_default_blocks: false,
               },
             },
-          },
-          method: {
-            upi: true,
-            card: true,
-            netbanking: true,
-            wallet: true,
           },
 
           order_id: order_id,
