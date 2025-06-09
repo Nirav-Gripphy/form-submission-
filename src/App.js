@@ -1,12 +1,10 @@
-import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
 import RegistrationForm from "./components/RegistrationForm";
 import "bootstrap";
 import "./App.css";
-import firebase, { db, storage } from "./services/firebase";
+import { db, storage } from "./services/firebase";
+import AboutUs from "./page/AboutUs";
+import TermsAndConditions from "./page/TermsAndConditions ";
 
 // Your Firebase configuration
 // const firebaseConfig = {
@@ -34,7 +32,9 @@ function App() {
           <Route
             path="/"
             element={<RegistrationForm db={db} storage={storage} />}
-          />
+          />{" "}
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/policy" element={<TermsAndConditions />} />
         </Routes>
       </div>
     </Router>

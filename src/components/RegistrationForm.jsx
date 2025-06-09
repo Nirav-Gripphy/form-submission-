@@ -238,7 +238,7 @@ const RegistrationForm = ({ db, storage }) => {
         <div className="header">
           <div className="logo-container">
             <img
-              src="https://beti-terapanth-ki.griphhy.com/assets/img/bizconnect-logo-new%20(1).png"
+              src="./header-logo.png"
               alt="Jain Śvetāmbara Terapanth Mahasabha"
               className="logo"
               style={{
@@ -295,6 +295,7 @@ const RegistrationForm = ({ db, storage }) => {
         >
           <img
             src="./footer.svg"
+            alt="footer_svg"
             style={{ maxWidth: "340px", marginTop: "0px", paddingTop: "0px" }}
           />
         </footer>
