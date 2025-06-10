@@ -26,7 +26,7 @@ const useRegistrations = () => {
       setLoading(true);
       setError(null);
 
-      const registrationsRef = collection(db, "registrations");
+      const registrationsRef = collection(db, "registrations-local");
       const registrationsQuery = query(
         registrationsRef,
         orderBy("updatedAt", "desc")
@@ -221,14 +221,14 @@ const StatsDisplay = React.memo(({ filteredRegistrations }) => {
             Total Participants: {stats.totalParticipants}
           </span>
         </div>
-        <div
+        {/* <div
           onClick={() => {
             moveTempToLive();
           }}
           className="bg-primary bg-opacity-10 px-3 py-2 rounded border border-primary border-opacity-25"
         >
           <span className="text-white fw-medium">Move Temp to Live</span>
-        </div>
+        </div> */}
       </div>
     </div>
   );

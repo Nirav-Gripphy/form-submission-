@@ -7,6 +7,7 @@ import {
   addDoc,
   updateDoc,
   doc,
+  runTransaction,
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import PhoneInput from "./PhoneInput";
@@ -146,7 +147,71 @@ const RegistrationForm = ({ db, storage }) => {
     });
   };
 
-  // Update form data with automatic save
+  const generateUniqueBarcode = async () => {
+    const maxRetries = 3;
+    let attempt = 0;
+
+    while (attempt < maxRetries) {
+      try {
+        const result = await runTransaction(db, async (transaction) => {
+          // Reference to the counter document
+          const counterRef = doc(db, "counters", "barcodeCounter");
+
+          // Get current counter value
+          const counterDoc = await transaction.get(counterRef);
+
+          let nextNumber;
+          if (!counterDoc.exists()) {
+            // Initialize counter if it doesn't exist
+            nextNumber = 1;
+            transaction.set(counterRef, {
+              count: nextNumber,
+              lastUpdated: new Date(),
+            });
+          } else {
+            // Increment the counter atomically
+            nextNumber = counterDoc.data().count + 1;
+            transaction.update(counterRef, {
+              count: nextNumber,
+              lastUpdated: new Date(),
+            });
+          }
+
+          // Format the number with leading zeros
+          const formattedNumber = String(nextNumber).padStart(5, "0");
+
+          return {
+            primaryBarcodeId: `B-${formattedNumber}`,
+            spouseBarcodeId: `D-${formattedNumber}`,
+            barcodeNumber: nextNumber,
+          };
+        });
+
+        return result;
+      } catch (error) {
+        attempt++;
+        console.error(`Barcode generation attempt ${attempt} failed:`, error);
+
+        if (attempt >= maxRetries) {
+          // Fallback to timestamp-based barcode if all retries fail
+          const timestamp = Date.now();
+          const randomSuffix = Math.floor(Math.random() * 1000)
+            .toString()
+            .padStart(3, "0");
+          return {
+            primaryBarcodeId: `B-${timestamp}-${randomSuffix}`,
+            spouseBarcodeId: `D-${timestamp}-${randomSuffix}`,
+            barcodeNumber: timestamp,
+          };
+        }
+
+        // Wait briefly before retry
+        await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+      }
+    }
+  };
+
+  // Updated user data function with barcode generation
   const updateUserData = async (data) => {
     // First update the local state
     const updatedData = { ...userData, ...data };
@@ -170,9 +235,13 @@ const RegistrationForm = ({ db, storage }) => {
           );
           await updateDoc(registrationDocRef, registrationData);
         } else {
-          // Create new registration entry
+          // Generate unique barcode for new registration
+          const barcodeData = await generateUniqueBarcode();
+
+          // Create new registration entry with barcode
           const docRef = await addDoc(collection(db, "registrations-local"), {
             ...registrationData,
+            ...barcodeData,
             createdAt: new Date(),
           });
 
@@ -182,50 +251,14 @@ const RegistrationForm = ({ db, storage }) => {
           setUserData((prevData) => ({
             ...prevData,
             registrationId: newRegistrationId,
+            id: newRegistrationId,
+            ...barcodeData, // Include barcode data in local state
           }));
         }
       } catch (error) {
         console.error("Error saving registration data:", error);
         setError("डेटा सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
       }
-    }
-  };
-
-  // Save or update registration data in Firebase
-  const saveRegistrationData = async () => {
-    try {
-      setLoading(true);
-
-      const registrationData = {
-        ...userData,
-        updatedAt: new Date(),
-        registrationStep: step,
-      };
-
-      if (registrationId) {
-        // Update existing registration
-        const registrationDocRef = doc(
-          db,
-          "registrations-local",
-          registrationId
-        );
-        await updateDoc(registrationDocRef, registrationData);
-      } else {
-        // Create new registration entry
-        const docRef = await addDoc(collection(db, "registrations-local"), {
-          ...registrationData,
-          createdAt: new Date(),
-        });
-        setRegistrationId(docRef.id);
-      }
-
-      setLoading(false);
-      return true;
-    } catch (error) {
-      console.error("Error saving registration data:", error);
-      setError("डेटा सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
-      setLoading(false);
-      return false;
     }
   };
 
@@ -249,18 +282,6 @@ const RegistrationForm = ({ db, storage }) => {
     }));
   }, [userData.hasHusband]);
 
-  // Auto-save is now handled in updateUserData, so we can remove this useEffect
-  // useEffect(() => {
-  //   if (step > 1 && registrationId) {
-  //     const timeoutId = setTimeout(() => {
-  //       saveRegistrationData();
-  //     }, 2000); // Auto-save after 2 seconds of inactivity
-
-  //     return () => clearTimeout(timeoutId);
-  //   }
-  // }, [userData, step, registrationId]);
-
-  // Render the appropriate form step
   const renderStep = () => {
     switch (step) {
       case 0:
@@ -310,7 +331,6 @@ const RegistrationForm = ({ db, storage }) => {
             userData={userData}
             updateUserData={updateUserData}
             prevStep={prevStep}
-            saveRegistrationData={saveRegistrationData}
             loading={loading}
           />
         );

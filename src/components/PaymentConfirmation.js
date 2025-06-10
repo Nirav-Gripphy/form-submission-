@@ -44,7 +44,6 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       setPaymentSuccess(true);
       setPaymentId(userData.paymentId);
       setOrderId(userData.orderId);
-      setRegistrationId(userData.id);
 
       // Set primary barcode data if available in userData
       if (userData.primaryBarcodeId) {
@@ -56,6 +55,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         setSpouseBarcodeData(userData.spouseBarcodeId);
       }
     }
+    setRegistrationId(userData.id);
   }, [userData]);
 
   useEffect(() => {
@@ -217,6 +217,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         attendeeCount: attendeeCount,
         primaryBarcodeId: barcodeData.primaryBarcodeId || "",
         updatedAt: new Date(),
+        spouseBarcodeId: "",
       };
 
       // Add spouse barcode ID if user has husband
@@ -233,12 +234,12 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
       if (regId) {
         // Update the existing failed registration
-        console.log("Updating existing registration:", regId);
+        // console.log("Updating existing registration:", regId);
         const registrationDocRef = doc(db, "registrations-local", regId);
         await updateDoc(registrationDocRef, registrationData);
       } else {
         // Create a new registration
-        console.log("Creating new registration");
+        // console.log("Creating new registration");
         const registrationRef = await addDoc(
           collection(db, "registrations-local"),
           registrationData
@@ -257,10 +258,13 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
   const handlePaymentSuccess = async (paymentDetails) => {
     try {
-      console.log("Payment success with registrationId:", registrationId);
+      // console.log("Payment success with registrationId:", registrationId);
 
       // Get next barcode numbers
-      const barcodeData = await getNextBarcodeNumber();
+      const barcodeData = {
+        primaryBarcodeId: userData.primaryBarcodeId,
+        spouseBarcodeId: userData.spouseBarcodeId,
+      };
 
       // Save/update registration in Firebase with the barcode data
       const regId = await saveRegistration(
@@ -278,9 +282,9 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       setPaymentFailed(false);
 
       // Set barcode data for display
-      setPrimaryBarcodeData(barcodeData.primaryBarcodeId);
+      setPrimaryBarcodeData(userData.primaryBarcodeId);
       if (userData.hasHusband) {
-        setSpouseBarcodeData(barcodeData.spouseBarcodeId);
+        setSpouseBarcodeData(userData.spouseBarcodeId);
       }
 
       // Update the payment status and user data
@@ -290,15 +294,15 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         paymentId: paymentDetails.razorpayPaymentId,
         orderId: paymentDetails.razorpayOrderId,
         id: regId,
-        primaryBarcodeId: barcodeData.primaryBarcodeId,
+        primaryBarcodeId: userData.primaryBarcodeId,
       };
 
       // Add spouse barcode ID if exists
       if (userData.hasHusband) {
-        updatedData.spouseBarcodeId = barcodeData.spouseBarcodeId;
+        updatedData.spouseBarcodeId = userData.spouseBarcodeId;
       }
 
-      updateUserData(updatedData);
+      // updateUserData(updatedData);
     } catch (error) {
       console.error("Error processing successful payment:", error);
       setPaymentFailed(true);
