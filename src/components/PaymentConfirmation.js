@@ -234,13 +234,13 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       if (regId) {
         // Update the existing failed registration
         console.log("Updating existing registration:", regId);
-        const registrationDocRef = doc(db, "registrations", regId);
+        const registrationDocRef = doc(db, "registrations-local", regId);
         await updateDoc(registrationDocRef, registrationData);
       } else {
         // Create a new registration
         console.log("Creating new registration");
         const registrationRef = await addDoc(
-          collection(db, "registrations-temp"),
+          collection(db, "registrations-local"),
           registrationData
         );
         regId = registrationRef.id;
@@ -343,6 +343,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         {
           amount: amount,
           currency: "INR",
+          env: "dev", // fpr local only
         }
       );
 

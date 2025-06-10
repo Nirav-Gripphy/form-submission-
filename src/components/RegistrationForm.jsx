@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import PhoneInput from "./PhoneInput";
 import PersonalInfo from "./PersonalInfo";
@@ -29,11 +37,13 @@ const RegistrationForm = ({ db, storage }) => {
     additionalPeople: [],
     paymentAmount: 500,
     paymentStatus: "pending",
+    registrationId: null, // Add this to track the document ID
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [userExists, setUserExists] = useState(false);
+  const [registrationId, setRegistrationId] = useState(null);
 
   // Check if user exists in Firebase
   const checkUserExists = async (phoneNumber) => {
@@ -43,7 +53,7 @@ const RegistrationForm = ({ db, storage }) => {
     try {
       // Step 1: Check in 'registration' collection
       const registrationQuery = query(
-        collection(db, "registrations-temp"),
+        collection(db, "registrations-local"),
         where("phoneNumber", "==", phoneNumber)
       );
       const registrationSnapshot = await getDocs(registrationQuery);
@@ -57,13 +67,15 @@ const RegistrationForm = ({ db, storage }) => {
           state: regData.state || "",
           phoneNumber: regData.phoneNumber || phoneNumber,
           photoURL: regData.photoURL || "",
+          registrationId: registrationSnapshot.docs[0].id, // Store the ID
           // Add more fields as per your data model
           ...regData,
           id: registrationSnapshot.docs[0].id,
         });
 
+        setRegistrationId(registrationSnapshot.docs[0].id);
         setUserExists(true);
-        setStep(4); // Step for already registered users
+        setStep(regData?.paymentStatus === "pending" ? 1 : 4); // Step for already registered users
         return;
       }
 
@@ -134,15 +146,90 @@ const RegistrationForm = ({ db, storage }) => {
     });
   };
 
-  // Update form data
-  const updateUserData = (data) => {
-    setUserData((prevData) => ({
-      ...prevData,
-      ...data,
-    }));
+  // Update form data with automatic save
+  const updateUserData = async (data) => {
+    // First update the local state
+    const updatedData = { ...userData, ...data };
+    setUserData(updatedData);
+
+    // Only save to database if we're past step 0 (phone verification)
+    if (step > 0) {
+      try {
+        const registrationData = {
+          ...updatedData,
+          updatedAt: new Date(),
+          registrationStep: step,
+        };
+
+        if (registrationId) {
+          // Update existing registration
+          const registrationDocRef = doc(
+            db,
+            "registrations-local",
+            registrationId
+          );
+          await updateDoc(registrationDocRef, registrationData);
+        } else {
+          // Create new registration entry
+          const docRef = await addDoc(collection(db, "registrations-local"), {
+            ...registrationData,
+            createdAt: new Date(),
+          });
+
+          // Save the registration ID in userData for future updates
+          const newRegistrationId = docRef.id;
+          setRegistrationId(newRegistrationId);
+          setUserData((prevData) => ({
+            ...prevData,
+            registrationId: newRegistrationId,
+          }));
+        }
+      } catch (error) {
+        console.error("Error saving registration data:", error);
+        setError("डेटा सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
+      }
+    }
   };
 
-  // Navigate to next step
+  // Save or update registration data in Firebase
+  const saveRegistrationData = async () => {
+    try {
+      setLoading(true);
+
+      const registrationData = {
+        ...userData,
+        updatedAt: new Date(),
+        registrationStep: step,
+      };
+
+      if (registrationId) {
+        // Update existing registration
+        const registrationDocRef = doc(
+          db,
+          "registrations-local",
+          registrationId
+        );
+        await updateDoc(registrationDocRef, registrationData);
+      } else {
+        // Create new registration entry
+        const docRef = await addDoc(collection(db, "registrations-local"), {
+          ...registrationData,
+          createdAt: new Date(),
+        });
+        setRegistrationId(docRef.id);
+      }
+
+      setLoading(false);
+      return true;
+    } catch (error) {
+      console.error("Error saving registration data:", error);
+      setError("डेटा सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
+      setLoading(false);
+      return false;
+    }
+  };
+
+  // Navigate to next step (simplified since saving is handled in updateUserData)
   const nextStep = () => {
     setStep((prevStep) => prevStep + 1);
   };
@@ -161,6 +248,17 @@ const RegistrationForm = ({ db, storage }) => {
       paymentAmount: amount,
     }));
   }, [userData.hasHusband]);
+
+  // Auto-save is now handled in updateUserData, so we can remove this useEffect
+  // useEffect(() => {
+  //   if (step > 1 && registrationId) {
+  //     const timeoutId = setTimeout(() => {
+  //       saveRegistrationData();
+  //     }, 2000); // Auto-save after 2 seconds of inactivity
+
+  //     return () => clearTimeout(timeoutId);
+  //   }
+  // }, [userData, step, registrationId]);
 
   // Render the appropriate form step
   const renderStep = () => {
@@ -183,6 +281,7 @@ const RegistrationForm = ({ db, storage }) => {
             handleFileUpload={handleFileUpload}
             nextStep={nextStep}
             prevStep={prevStep}
+            loading={loading}
           />
         );
       case 2:
@@ -192,6 +291,7 @@ const RegistrationForm = ({ db, storage }) => {
             updateUserData={updateUserData}
             nextStep={nextStep}
             prevStep={prevStep}
+            loading={loading}
           />
         );
       case 3:
@@ -201,6 +301,7 @@ const RegistrationForm = ({ db, storage }) => {
             updateUserData={updateUserData}
             nextStep={nextStep}
             prevStep={prevStep}
+            loading={loading}
           />
         );
       case 4:
@@ -209,6 +310,8 @@ const RegistrationForm = ({ db, storage }) => {
             userData={userData}
             updateUserData={updateUserData}
             prevStep={prevStep}
+            saveRegistrationData={saveRegistrationData}
+            loading={loading}
           />
         );
       case 5:
