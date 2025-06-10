@@ -14,6 +14,7 @@ import { Pagination } from "../components/Pagination";
 import DetailsModal from "../components/DetailsModal";
 import PaymentModal from "../components/PaymentModal";
 import GuestModal from "../components/GuestModal";
+import BarcodeUpdater from "../Utility/BarcodeUpdater";
 
 // Custom hooks for better separation of concerns
 const useRegistrations = () => {
@@ -26,7 +27,7 @@ const useRegistrations = () => {
       setLoading(true);
       setError(null);
 
-      const registrationsRef = collection(db, "registrations-local");
+      const registrationsRef = collection(db, "registrations");
       const registrationsQuery = query(
         registrationsRef,
         orderBy("updatedAt", "desc")
@@ -34,6 +35,8 @@ const useRegistrations = () => {
 
       const snapshot = await getDocs(registrationsQuery);
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+      console.log("data 000000", data);
 
       setRegistrations(data);
     } catch (err) {
@@ -536,11 +539,12 @@ const RegistrationList = () => {
                               <div>
                                 {registration.primaryBarcodeId || "N/A"}
                               </div>
-                              {registration.spouseBarcodeId && (
-                                <div className="text-muted">
-                                  {registration.spouseBarcodeId}
-                                </div>
-                              )}
+                              {registration.hasHusband &&
+                                registration.spouseBarcodeId && (
+                                  <div className="text-muted">
+                                    {registration.spouseBarcodeId}
+                                  </div>
+                                )}
                             </div>
                           </td>
                           <td className="d-none d-lg-table-cell small">
@@ -598,6 +602,7 @@ const RegistrationList = () => {
         key={"guest_modal"}
       />
 
+      {/* <BarcodeUpdater /> */}
       {/* Footer */}
       <footer className="text-center py-4 mt-5">
         <img

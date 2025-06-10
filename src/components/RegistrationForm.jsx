@@ -54,7 +54,7 @@ const RegistrationForm = ({ db, storage }) => {
     try {
       // Step 1: Check in 'registration' collection
       const registrationQuery = query(
-        collection(db, "registrations-local"),
+        collection(db, "registrations"),
         where("phoneNumber", "==", phoneNumber)
       );
       const registrationSnapshot = await getDocs(registrationQuery);
@@ -230,7 +230,7 @@ const RegistrationForm = ({ db, storage }) => {
           // Update existing registration
           const registrationDocRef = doc(
             db,
-            "registrations-local",
+            "registrations",
             registrationId
           );
           await updateDoc(registrationDocRef, registrationData);
@@ -239,7 +239,7 @@ const RegistrationForm = ({ db, storage }) => {
           const barcodeData = await generateUniqueBarcode();
 
           // Create new registration entry with barcode
-          const docRef = await addDoc(collection(db, "registrations-local"), {
+          const docRef = await addDoc(collection(db, "registrations"), {
             ...registrationData,
             ...barcodeData,
             createdAt: new Date(),
