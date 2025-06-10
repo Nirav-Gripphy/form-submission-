@@ -21,8 +21,6 @@ const UserPassCard = ({ userData, barcodeRef, cardRef }) => {
           <br />
           शहर : {userData.city}
           <br />
-          राज्य : {userData.state}
-          <br />
           जीवनसाथी के साथ : {userData.hasHusband ? "हाँ" : "नहीं"}
         </div>
         <div className="barcode-container">

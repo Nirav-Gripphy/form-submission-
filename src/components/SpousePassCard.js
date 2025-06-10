@@ -19,8 +19,6 @@ const SpousePassCard = ({ userData, barcodeRef, cardRef }) => {
           <br />
           मोबाइल : {userData.phoneNumber}
           <br />
-          शहर : {userData.city}
-          <br />
           राज्य : {userData.state}
         </div>
         <div className="barcode-container">
