@@ -8,7 +8,6 @@ export const exportToCSV = (data, filename = "registrations-export.csv") => {
   }
 
   try {
-    // Convert Firebase data to CSV format
     const csvData = data.map((registration) => ({
       "Registration ID": registration.registrationId || registration.id,
       "Primary Barcode ID": registration.primaryBarcodeId || "",
@@ -31,21 +30,18 @@ export const exportToCSV = (data, filename = "registrations-export.csv") => {
         : "",
       "Photo URL": registration.photoURL || "",
       "Husband Photo URL": registration.husbandPhotoURL || "",
-
       "Arrival Date": registration.arrivalDate || "",
       "Arrival Time": registration.arrivalTime || "",
       "Arrival Travel Mode": registration.arrivalTravelMode || "",
       "Departure Date": registration.departureDate || "",
       "Departure Time": registration.departureTime || "",
       "Departure Travel Mode": registration.departureTravelMode || "",
-
       "Payment Status": registration.paymentStatus || "",
       "Payment Amount": registration.paymentAmount || "",
       "Payment ID": registration.paymentId || "",
       "Order ID": registration.orderId || "",
     }));
 
-    // Convert to CSV string
     const headers = Object.keys(csvData[0]);
     const csvContent = [
       headers.join(","),
@@ -53,7 +49,6 @@ export const exportToCSV = (data, filename = "registrations-export.csv") => {
         headers
           .map((header) => {
             const value = row[header];
-            // Handle values that might contain commas or quotes
             if (
               typeof value === "string" &&
               (value.includes(",") ||
@@ -68,7 +63,6 @@ export const exportToCSV = (data, filename = "registrations-export.csv") => {
       ),
     ].join("\n");
 
-    // Create and download file
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -80,6 +74,7 @@ export const exportToCSV = (data, filename = "registrations-export.csv") => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    alert();
+    console.error("CSV Export Failed:", error);
+    alert("Failed to export CSV. Please try again.");
   }
 };
