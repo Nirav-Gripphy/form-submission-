@@ -37,8 +37,6 @@ const useRegistrations = () => {
       const snapshot = await getDocs(registrationsQuery);
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-      console.log("data 000000", data);
-
       setRegistrations(data);
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -183,7 +181,6 @@ const SearchInput = React.memo(({ value, onChange, totalResults }) => (
 ));
 
 const StatsDisplay = React.memo(({ filteredRegistrations }) => {
-  console.log("filteredRegistrations --", filteredRegistrations);
   const stats = useMemo(() => {
     const totalRegistrations = filteredRegistrations.length;
 
