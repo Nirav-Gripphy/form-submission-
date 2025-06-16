@@ -15,6 +15,7 @@ import DetailsModal from "../components/DetailsModal";
 import PaymentModal from "../components/PaymentModal";
 import GuestModal from "../components/GuestModal";
 import BarcodeUpdater from "../Utility/BarcodeUpdater";
+import { exportToCSV } from "../Utility/exportUtils";
 
 // Custom hooks for better separation of concerns
 const useRegistrations = () => {
@@ -182,6 +183,7 @@ const SearchInput = React.memo(({ value, onChange, totalResults }) => (
 ));
 
 const StatsDisplay = React.memo(({ filteredRegistrations }) => {
+  console.log("filteredRegistrations --", filteredRegistrations);
   const stats = useMemo(() => {
     const totalRegistrations = filteredRegistrations.length;
 
@@ -224,6 +226,18 @@ const StatsDisplay = React.memo(({ filteredRegistrations }) => {
             Total Participants: {stats.totalParticipants}
           </span>
         </div>
+
+        <button
+          className="btn btn-success dropdown-toggle d-flex align-items-center"
+          type="button"
+          onClick={() => {
+            exportToCSV([...(filteredRegistrations ?? [])].reverse());
+          }}
+        >
+          <i className="bi bi-download me-2"></i>
+          Export ({filteredRegistrations.length})
+        </button>
+
         {/* <div
           onClick={() => {
             moveTempToLive();
