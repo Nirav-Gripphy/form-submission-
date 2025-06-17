@@ -314,15 +314,17 @@ const ActionButtons = React.memo(({ registration, onOpenModal }) => (
     >
       <i className="bi bi-credit-card" aria-hidden="true"></i>
     </button>
-    {/* <button
+    <button
       type="button"
       className="btn btn-outline-dark btn-sm"
-      onClick={() => onOpenModal(registration, "download")}
+      onClick={() => {
+        onOpenModal(registration, "download");
+      }}
       title="Download recipt"
       aria-label={`View payment details for ${registration.name}`}
     >
       <i className="bi bi-download "></i>
-    </button> */}
+    </button>
     {registration.additionalPeople?.length > 0 && (
       <button
         type="button"

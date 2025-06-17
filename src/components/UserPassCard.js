@@ -15,13 +15,13 @@ const UserPassCard = ({ userData, barcodeRef, cardRef }) => {
         </div>
         <div className="entry-card-heading">प्रवेश पत्र</div>
         <div className="entry-card-details">
-          नाम : {userData.name}
+          नाम : {userData?.name}
           <br />
-          मोबाइल : {userData.phoneNumber}
+          मोबाइल : {userData?.phoneNumber}
           <br />
-          शहर : {userData.city}
+          शहर : {userData?.city}, {userData?.state}
           <br />
-          जीवनसाथी के साथ : {userData.hasHusband ? "हाँ" : "नहीं"}
+          जीवनसाथी के साथ : {userData?.hasHusband ? "हाँ" : "नहीं"}
         </div>
         <div className="barcode-container">
           <svg id="barcode" ref={barcodeRef} className="barcode-svg"></svg>
