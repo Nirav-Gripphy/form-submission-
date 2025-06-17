@@ -174,13 +174,7 @@ const PersonalInfo = ({
 
   // Enhanced file validation constants
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
-  const ALLOWED_IMAGE_TYPES = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-  ];
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
   // Helper function to format file size
   const formatFileSize = (bytes) => {
@@ -197,7 +191,7 @@ const PersonalInfo = ({
 
     // Check if file is an image
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      errors.push("केवल छवि फ़ाइलें अपलोड करें (JPG, PNG, GIF, WebP)");
+      errors.push("केवल छवि फ़ाइलें अपलोड करें (JPG, PNG, JPEG)");
     }
 
     // Check file size
@@ -545,13 +539,13 @@ const PersonalInfo = ({
                   फोटो अपलोड करने के लिए क्लिक करें या यहां खींचें
                 </p>
                 <p className="upload-requirements">
-                  केवल छवि फाइलें (JPG, PNG, GIF, WebP) • अधिकतम 5MB
+                  केवल छवि फाइलें (JPG, PNG, JPEG) • अधिकतम 5MB
                 </p>
                 <input
                   type="file"
                   className="file-input"
                   id="photo"
-                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  accept="image/jpeg,image/jpg,image/png"
                   onChange={handleFileChange}
                 />
               </div>
@@ -683,13 +677,13 @@ const PersonalInfo = ({
                       खींचें
                     </p>
                     <p className="upload-requirements">
-                      केवल छवि फाइलें (JPG, PNG, GIF, WebP) • अधिकतम 5MB
+                      केवल छवि फाइलें (JPG, PNG, JPEG) • अधिकतम 5MB
                     </p>
                     <input
                       type="file"
                       className="file-input"
                       id="husbandPhoto"
-                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      accept="image/jpeg,image/jpg,image/png"
                       onChange={handleHusbandFileChange}
                     />
                   </div>
