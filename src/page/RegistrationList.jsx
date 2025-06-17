@@ -16,6 +16,7 @@ import PaymentModal from "../components/PaymentModal";
 import GuestModal from "../components/GuestModal";
 import BarcodeUpdater from "../Utility/BarcodeUpdater";
 import { exportToCSV } from "../Utility/exportUtils";
+import DownloadModal from "../components/DownloadModal";
 
 // Custom hooks for better separation of concerns
 const useRegistrations = () => {
@@ -225,7 +226,7 @@ const StatsDisplay = React.memo(({ filteredRegistrations }) => {
         </div>
 
         <button
-          className="btn btn-success dropdown-toggle d-flex align-items-center"
+          className="btn btn-success  d-flex align-items-center"
           type="button"
           onClick={() => {
             exportToCSV([...(filteredRegistrations ?? [])].reverse());
@@ -313,6 +314,15 @@ const ActionButtons = React.memo(({ registration, onOpenModal }) => (
     >
       <i className="bi bi-credit-card" aria-hidden="true"></i>
     </button>
+    {/* <button
+      type="button"
+      className="btn btn-outline-dark btn-sm"
+      onClick={() => onOpenModal(registration, "download")}
+      title="Download recipt"
+      aria-label={`View payment details for ${registration.name}`}
+    >
+      <i className="bi bi-download "></i>
+    </button> */}
     {registration.additionalPeople?.length > 0 && (
       <button
         type="button"
@@ -594,7 +604,6 @@ const RegistrationList = () => {
         </div>
       </main>
 
-      {/* Modals would go here - keeping the existing modal structure but with improved accessibility */}
       {/* Details Modal */}
       <DetailsModal
         selectedRegistration={selectedRegistration}
@@ -611,6 +620,11 @@ const RegistrationList = () => {
       <GuestModal
         selectedRegistration={selectedRegistration}
         key={"guest_modal"}
+      />
+
+      <DownloadModal
+        selectedRegistration={selectedRegistration}
+        key={"download_modal"}
       />
 
       {/* <BarcodeUpdater /> */}

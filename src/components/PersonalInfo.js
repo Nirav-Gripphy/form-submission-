@@ -1,6 +1,5 @@
-// components/PersonalInfo.js - Personal information form
+// components/PersonalInfo.js - Personal information form with enhanced file validation
 import React, { useState, useEffect } from "react";
-// import "../styles/PersonalInfo.css";
 
 // Add the required CSS styles
 const styles = `
@@ -21,6 +20,11 @@ const styles = `
     background-color: rgba(52, 144, 220, 0.05);
   }
   
+  .photo-upload-container.error {
+    border-color: #e3342f;
+    background-color: rgba(227, 52, 47, 0.05);
+  }
+  
   .upload-placeholder {
     display: flex;
     flex-direction: column;
@@ -38,6 +42,12 @@ const styles = `
     color: #666;
     margin-bottom: 10px;
     font-size: 14px;
+  }
+  
+  .upload-requirements {
+    color: #999;
+    font-size: 12px;
+    margin-top: 5px;
   }
   
   .file-input {
@@ -112,6 +122,16 @@ const styles = `
     font-size: 14px;
     margin-top: 5px;
   }
+  
+  .file-info {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6c757d;
+  }
 `;
 
 const PersonalInfo = ({
@@ -152,6 +172,51 @@ const PersonalInfo = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isHusbandDragging, setIsHusbandDragging] = useState(false);
 
+  // Enhanced file validation constants
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+  const ALLOWED_IMAGE_TYPES = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+  ];
+
+  // Helper function to format file size
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  // Enhanced validation function
+  const validateFile = (file) => {
+    const errors = [];
+
+    // Check if file is an image
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      errors.push("केवल छवि फ़ाइलें अपलोड करें (JPG, PNG, GIF, WebP)");
+    }
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      errors.push(
+        `फ़ाइल का आकार ${formatFileSize(
+          MAX_FILE_SIZE
+        )} से कम होना चाहिए। आपकी फ़ाइल: ${formatFileSize(file.size)}`
+      );
+    }
+
+    // Check if file is empty
+    if (file.size === 0) {
+      errors.push("फ़ाइल खाली है। कृपया एक वैध छवि चुनें");
+    }
+
+    return errors;
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -159,13 +224,13 @@ const PersonalInfo = ({
     if (!localData.city.trim()) newErrors.city = "शहर आवश्यक है";
     if (!localData.state.trim()) newErrors.state = "राज्य आवश्यक है";
 
-    // ✅ FIXED: Check if either photoFile exists OR photoURL exists in userData
+    // Check if either photoFile exists OR photoURL exists in userData
     const hasPhoto = localData.photoFile instanceof File || userData.photoURL;
     if (!hasPhoto) {
       newErrors.photoFile = "फोटो आवश्यक है";
     }
 
-    // ✅ FIXED: If hasHusband is true, check husband name and photo
+    // If hasHusband is true, check husband name and photo
     if (localData.hasHusband) {
       if (!localData.husbandName.trim()) {
         newErrors.husbandName = "जीवनसाथी का नाम आवश्यक है";
@@ -215,29 +280,40 @@ const PersonalInfo = ({
   };
 
   const processFile = (file, personType) => {
-    // Validate file is an image
-    if (!file.type.match("image.*")) {
+    const fieldName =
+      personType === "husband" ? "husbandPhotoFile" : "photoFile";
+
+    // Enhanced validation
+    const validationErrors = validateFile(file);
+
+    if (validationErrors.length > 0) {
       setErrors((prev) => ({
         ...prev,
-        [personType === "husband" ? "husbandPhoto" : "photo"]:
-          "कृपया केवल छवि फ़ाइलें अपलोड करें (jpg, png, gif, etc.)",
+        [fieldName]: validationErrors.join(". "),
       }));
+      setLocalData((prev) => ({
+        ...prev,
+        [fieldName]: null,
+      }));
+      if (personType === "husband") {
+        setHusbandPreviewImage("");
+      } else {
+        setPreviewImage("");
+      }
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors((prev) => ({
-        ...prev,
-        [personType === "husband" ? "husbandPhoto" : "photo"]:
-          "छवि 5MB से कम होनी चाहिए",
-      }));
-      return;
-    }
+    // Clear any previous errors
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldName];
+      return newErrors;
+    });
 
+    // Update local data with the file
     setLocalData((prev) => ({
       ...prev,
-      [personType === "husband" ? "husbandPhotoFile" : "photoFile"]: file,
+      [fieldName]: file,
     }));
 
     // Create a preview for the selected image
@@ -249,18 +325,13 @@ const PersonalInfo = ({
         setPreviewImage(reader.result);
       }
     };
+    reader.onerror = () => {
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: "फ़ाइल पढ़ने में त्रुटि। कृपया पुनः प्रयास करें।",
+      }));
+    };
     reader.readAsDataURL(file);
-
-    // Clear any previous errors
-    if (errors[personType === "husband" ? "husbandPhotoFile" : "photoFile"]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[
-          personType === "husband" ? "husbandPhotoFile" : "photoFile"
-        ];
-        return newErrors;
-      });
-    }
   };
 
   const handleDragOver = (e) => {
@@ -353,12 +424,18 @@ const PersonalInfo = ({
     }
   };
 
-  // ✅ ADDED: Handle remove photo functionality
+  // Handle remove photo functionality
   const handleRemovePhoto = () => {
     setPreviewImage(null);
     setLocalData((prev) => ({ ...prev, photoFile: null }));
     // Also clear from userData if needed
     updateUserData({ ...userData, photoURL: null });
+    // Clear any related errors
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.photoFile;
+      return newErrors;
+    });
   };
 
   const handleRemoveHusbandPhoto = () => {
@@ -366,6 +443,12 @@ const PersonalInfo = ({
     setLocalData((prev) => ({ ...prev, husbandPhotoFile: null }));
     // Also clear from userData if needed
     updateUserData({ ...userData, husbandPhotoURL: null });
+    // Clear any related errors
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.husbandPhotoFile;
+      return newErrors;
+    });
   };
 
   return (
@@ -433,11 +516,13 @@ const PersonalInfo = ({
 
         <div className="form-group">
           <label htmlFor="photo" className="isRequired">
-            ⁠Photo/फोटो
+            Photo/फोटो
           </label>
 
           <div
-            className={`photo-upload-container ${isDragging ? "dragging" : ""}`}
+            className={`photo-upload-container ${
+              isDragging ? "dragging" : ""
+            } ${errors.photoFile ? "error" : ""}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -459,11 +544,14 @@ const PersonalInfo = ({
                 <p className="upload-text">
                   फोटो अपलोड करने के लिए क्लिक करें या यहां खींचें
                 </p>
+                <p className="upload-requirements">
+                  केवल छवि फाइलें (JPG, PNG, GIF, WebP) • अधिकतम 5MB
+                </p>
                 <input
                   type="file"
                   className="file-input"
                   id="photo"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                   onChange={handleFileChange}
                 />
               </div>
@@ -474,6 +562,11 @@ const PersonalInfo = ({
                   alt="Profile Preview"
                   className="image-preview"
                 />
+                {localData.photoFile && (
+                  <div className="file-info">
+                    फ़ाइल: {localData.photoFile.name}
+                  </div>
+                )}
                 <div className="preview-actions">
                   <button
                     type="button"
@@ -483,11 +576,11 @@ const PersonalInfo = ({
                     }}
                   >
                     <i
-                      class="bi bi-pencil-square"
+                      className="bi bi-pencil-square"
                       style={{
                         width: "16px",
                       }}
-                    ></i>
+                    />
                     बदलें
                   </button>
                   <button
@@ -496,11 +589,11 @@ const PersonalInfo = ({
                     onClick={handleRemovePhoto}
                   >
                     <i
-                      class="bi bi-trash"
+                      className="bi bi-trash"
                       style={{
                         width: "16px",
                       }}
-                    ></i>
+                    />
                     हटाएं
                   </button>
                 </div>
@@ -508,7 +601,7 @@ const PersonalInfo = ({
                   type="file"
                   className="file-input hidden"
                   id="photo"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                   onChange={handleFileChange}
                 />
               </div>
@@ -566,7 +659,7 @@ const PersonalInfo = ({
               <div
                 className={`photo-upload-container ${
                   isHusbandDragging ? "dragging" : ""
-                }`}
+                } ${errors.husbandPhotoFile ? "error" : ""}`}
                 onDragOver={handleHusbandDragOver}
                 onDragLeave={handleHusbandDragLeave}
                 onDrop={handleHusbandDrop}
@@ -589,11 +682,14 @@ const PersonalInfo = ({
                       जीवनसाथी का फोटो अपलोड करने के लिए क्लिक करें या यहां
                       खींचें
                     </p>
+                    <p className="upload-requirements">
+                      केवल छवि फाइलें (JPG, PNG, GIF, WebP) • अधिकतम 5MB
+                    </p>
                     <input
                       type="file"
                       className="file-input"
                       id="husbandPhoto"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                       onChange={handleHusbandFileChange}
                     />
                   </div>
@@ -604,6 +700,12 @@ const PersonalInfo = ({
                       alt="Husband Profile Preview"
                       className="image-preview"
                     />
+                    {localData.husbandPhotoFile && (
+                      <div className="file-info">
+                        फ़ाइल: {localData.husbandPhotoFile.name} • आकार:{" "}
+                        {formatFileSize(localData.husbandPhotoFile.size)}
+                      </div>
+                    )}
                     <div className="preview-actions">
                       <button
                         type="button"
@@ -613,11 +715,11 @@ const PersonalInfo = ({
                         }}
                       >
                         <i
-                          class="bi bi-pencil-square"
+                          className="bi bi-pencil-square"
                           style={{
                             width: "16px",
                           }}
-                        ></i>
+                        />
                         बदलें
                       </button>
                       <button
@@ -626,11 +728,11 @@ const PersonalInfo = ({
                         onClick={handleRemoveHusbandPhoto}
                       >
                         <i
-                          class="bi bi-trash"
+                          className="bi bi-trash"
                           style={{
                             width: "16px",
                           }}
-                        ></i>
+                        />
                         हटाएं
                       </button>
                     </div>
@@ -638,7 +740,7 @@ const PersonalInfo = ({
                       type="file"
                       className="file-input hidden"
                       id="husbandPhoto"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                       onChange={handleHusbandFileChange}
                     />
                   </div>
@@ -670,7 +772,7 @@ const PersonalInfo = ({
                   className="spinner-border spinner-border-sm"
                   role="status"
                   aria-hidden="true"
-                ></span>
+                />
                 <span className="ms-2">Loading...</span>
               </span>
             ) : (
