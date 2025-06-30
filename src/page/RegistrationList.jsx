@@ -195,10 +195,10 @@ const StatsDisplay = React.memo(({ filteredRegistrations }) => {
           participantCount += 1;
         }
 
-        // // Add additional people
-        // if (registration.additionalPeople?.length > 0) {
-        //   participantCount += registration.additionalPeople.length;
-        // }
+        // Add additional people
+        if (registration.additionalPeople?.length > 0) {
+          participantCount += registration.additionalPeople.length;
+        }
 
         return sum + participantCount;
       },
@@ -221,7 +221,7 @@ const StatsDisplay = React.memo(({ filteredRegistrations }) => {
       <div className="d-flex gap-2 justify-content-md-end mt-3 mt-md-0 flex-wrap">
         <div className="bg-primary bg-opacity-10 px-3 py-2 rounded border border-primary border-opacity-25">
           <span className="text-white fw-medium">
-            Total Participants: {stats.totalParticipants}
+            Total Attendees: {stats.totalParticipants}
           </span>
         </div>
 
