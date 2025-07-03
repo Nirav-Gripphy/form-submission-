@@ -20,7 +20,12 @@ import "../styles/RegistrationForm.css";
 import { NoRegistation } from "./NoRegistation";
 
 const RegistrationForm = ({ db, storage }) => {
+  // Registration closing date - Today at 12:00 PM IST for testing
+  const REGISTRATION_CLOSE_DATE = new Date();
+  REGISTRATION_CLOSE_DATE.setHours(12, 0, 0, 0); // Set to 12:00 PM today
+
   const [step, setStep] = useState(0);
+  const [isRegistrationClosed, setIsRegistrationClosed] = useState(false);
   const [userData, setUserData] = useState({
     phoneNumber: "",
     name: "",
@@ -46,8 +51,40 @@ const RegistrationForm = ({ db, storage }) => {
   const [userExists, setUserExists] = useState(false);
   const [registrationId, setRegistrationId] = useState(null);
 
+  // Check if registration is closed using IST timezone
+  const checkRegistrationStatus = () => {
+    // Get current time in IST
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+    const istTime = new Date(now.getTime() + istOffset);
+
+    // For testing, we're using today at 12:00 PM
+    const closeTime = new Date(REGISTRATION_CLOSE_DATE);
+
+    // Convert close time to IST for comparison
+    const istCloseTime = new Date(closeTime.getTime() + istOffset);
+
+    setIsRegistrationClosed(istTime > istCloseTime);
+  };
+
+  // Check registration status on component mount and every second
+  useEffect(() => {
+    checkRegistrationStatus();
+
+    // Set up interval to check every second for real-time updates
+    const interval = setInterval(checkRegistrationStatus, 1000); // Check every second
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Check if user exists in Firebase
   const checkUserExists = async (phoneNumber) => {
+    // Don't allow new registrations if closed
+    if (isRegistrationClosed) {
+      setError("रजिस्ट्रेशन बंद हो गया है।");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -228,11 +265,7 @@ const RegistrationForm = ({ db, storage }) => {
 
         if (registrationId) {
           // Update existing registration
-          const registrationDocRef = doc(
-            db,
-            "registrations",
-            registrationId
-          );
+          const registrationDocRef = doc(db, "registrations", registrationId);
           await updateDoc(registrationDocRef, registrationData);
         } else {
           // Generate unique barcode for new registration
@@ -282,7 +315,92 @@ const RegistrationForm = ({ db, storage }) => {
     }));
   }, [userData.hasHusband]);
 
+  // Registration closed component
+  const RegistrationClosed = () => {
+    const formatDate = (date) => {
+      const options = {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Kolkata",
+      };
+      return new Intl.DateTimeFormat("hi-IN", options).format(date);
+    };
+
+    return (
+      <div
+        className="registration-closed-container"
+        style={{ textAlign: "center", padding: "2rem" }}
+      >
+        <div
+          className="closed-icon"
+          style={{ fontSize: "4rem", marginBottom: "1rem" }}
+        >
+          🚫
+        </div>
+        <h2
+          style={{ color: "#e74c3c", marginBottom: "1rem", fontWeight: "600" }}
+        >
+          रजिस्ट्रेशन बंद हो गया है
+        </h2>
+        <p style={{ fontSize: "1.1rem", marginBottom: "1rem", color: "#666" }}>
+          तृतीय सम्मलेन के लिए रजिस्ट्रेशन की अंतिम तिथि समाप्त हो गई है।
+        </p>
+        <div
+          style={{
+            background: "#f8f9fa",
+            padding: "1rem",
+            borderRadius: "8px",
+            marginBottom: "1.5rem",
+            border: "1px solid #dee2e6",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "0.9rem", color: "#495057" }}>
+            रजिस्ट्रेशन बंद हुई: {formatDate(REGISTRATION_CLOSE_DATE)}
+          </p>
+        </div>
+        <div style={{ marginTop: "2rem" }}>
+          <p style={{ fontSize: "1rem", color: "#666", marginBottom: "1rem" }}>
+            किसी भी प्रकार की सहायता के लिए संपर्क करें:
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.5rem",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              <span style={{ fontSize: "1.2rem" }}>📞</span>
+              <span style={{ fontSize: "1.1rem", fontWeight: "500" }}>
+                +91 XXXXX XXXXX
+              </span>
+            </div>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              <span style={{ fontSize: "1.2rem" }}>✉️</span>
+              <span style={{ fontSize: "1.1rem", fontWeight: "500" }}>
+                support@example.com
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderStep = () => {
+    // If registration is closed and we're on step 0 (phone input), show closed message
+    if (isRegistrationClosed && step === 0) {
+      return <RegistrationClosed />;
+    }
+
     switch (step) {
       case 0:
         return (
@@ -385,11 +503,11 @@ const RegistrationForm = ({ db, storage }) => {
             />
           </div>
 
-          {step > 0 && step !== 5 && (
+          {step > 0 && step !== 5 && !isRegistrationClosed && (
             <ProgressBar currentStep={step} totalSteps={4} />
           )}
 
-          {step === 0 && (
+          {step === 0 && !isRegistrationClosed && (
             <div className="mt-3 text-center">
               <h4
                 className=""
@@ -406,7 +524,7 @@ const RegistrationForm = ({ db, storage }) => {
           <div className="form-content">{renderStep()}</div>
         </div>
       </div>
-      {step === 0 && (
+      {step === 0 && !isRegistrationClosed && (
         <footer
           style={{
             position: "absolute",
