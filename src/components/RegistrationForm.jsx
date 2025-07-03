@@ -325,7 +325,7 @@ const RegistrationForm = ({ db, storage }) => {
         <h2
           style={{ color: "#e74c3c", marginBottom: "1rem", fontWeight: "600" }}
         >
-          रजिस्ट्रेशन के समय सीमा संपन्न हो चुकी है।
+          रजिस्ट्रेशन की समय सीमा संपन्न हो चुकी है।
         </h2>
       </div>
     );

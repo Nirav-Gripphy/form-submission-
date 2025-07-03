@@ -58,7 +58,7 @@ const useSearch = (registrations, searchTerm) => {
   return useMemo(() => {
     if (!searchTerm.trim()) return registrations;
 
-    const lowerSearchTerm = searchTerm.toLowerCase();
+    const lowerSearchTerm = searchTerm?.toLowerCase()?.trim();
     return registrations.filter((registration) => {
       const searchableFields = [
         registration.name,
@@ -67,6 +67,8 @@ const useSearch = (registrations, searchTerm) => {
         registration.state,
         registration.primaryBarcodeId,
         registration.husbandName,
+        registration.paymentId,
+        registration.orderId,
       ];
 
       return searchableFields.some(
