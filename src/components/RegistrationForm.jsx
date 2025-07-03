@@ -333,7 +333,7 @@ const RegistrationForm = ({ db, storage }) => {
 
   const renderStep = () => {
     // If registration is closed and we're on step 0 (phone input), show closed message
-    if (isRegistrationClosed && step === 0) {
+    if (isRegistrationClosed && step === 0) { 
       return <RegistrationClosed />;
     }
 
