@@ -21,7 +21,7 @@ import { NoRegistation } from "./NoRegistation";
 
 const RegistrationForm = ({ db, storage }) => {
   // Registration closing date - Today at 12:00 PM IST for testing
-  const REGISTRATION_CLOSE_DATE = new Date("2025-07-03");
+  const REGISTRATION_CLOSE_DATE = new Date("2026-07-03");
   REGISTRATION_CLOSE_DATE.setHours(23, 59, 0, 0); // Set to 12:00 PM today
 
   const [step, setStep] = useState(0);

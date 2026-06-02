@@ -15,7 +15,7 @@ import DetailsModal from "../components/DetailsModal";
 import PaymentModal from "../components/PaymentModal";
 import GuestModal from "../components/GuestModal";
 import BarcodeUpdater from "../Utility/BarcodeUpdater";
-import { exportToCSV } from "../Utility/exportUtils";
+import { exportToExcelWithBarcodeImages, exportToExcelWithExcelJS } from "../Utility/exportUtils";
 import DownloadModal from "../components/DownloadModal";
 
 // Custom hooks for better separation of concerns
@@ -231,7 +231,9 @@ const StatsDisplay = React.memo(({ filteredRegistrations }) => {
           className="btn btn-success  d-flex align-items-center"
           type="button"
           onClick={() => {
-            exportToCSV([...(filteredRegistrations ?? [])].reverse());
+            exportToExcelWithExcelJS(
+              [...(filteredRegistrations ?? [])].reverse()
+            );
           }}
         >
           <i className="bi bi-download me-2"></i>
@@ -472,7 +474,7 @@ const RegistrationList = () => {
                 onChange={setSearchTerm}
                 totalResults={filteredRegistrations.length}
               />
-              <StatsDisplay filteredRegistrations={filteredRegistrations} />
+              <StatsDisplay filteredRegistrations={registrations} />
             </div>
           </div>
         </div>
