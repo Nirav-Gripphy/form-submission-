@@ -19,7 +19,7 @@ const BarcodeUpdater = () => {
   const [totalDocuments, setTotalDocuments] = useState(0);
 
   // Collection name - update this to match your collection
-  const COLLECTION_NAME = "registrations";
+  const COLLECTION_NAME = "registration-2026";
 
   // Add log entry
   const addLog = (message, type = "info") => {

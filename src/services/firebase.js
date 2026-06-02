@@ -147,7 +147,7 @@ export const saveRegistration = async (registrationData) => {
     };
 
     const registrationRef = await addDoc(
-      collection(db, "registrations"),
+      collection(db, "registration-2026"),
       regData
     );
     return registrationRef.id;

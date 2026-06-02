@@ -29,7 +29,7 @@ const useRegistrations = () => {
       setLoading(true);
       setError(null);
 
-      const registrationsRef = collection(db, "registrations");
+      const registrationsRef = collection(db, "registration-2026");
       const registrationsQuery = query(
         registrationsRef,
         orderBy("updatedAt", "desc")

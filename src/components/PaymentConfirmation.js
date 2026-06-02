@@ -138,7 +138,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const getNextBarcodeNumber = async () => {
     try {
       // Query to get the latest registration with a barcode
-      const registrationsRef = collection(db, "registrations");
+      const registrationsRef = collection(db, "registration-2026");
       const q = query(
         registrationsRef,
         where("primaryBarcodeId", ">=", "B-"), // Look for barcodes starting with B-
@@ -235,13 +235,13 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       if (regId) {
         // Update the existing failed registration
         // console.log("Updating existing registration:", regId);
-        const registrationDocRef = doc(db, "registrations", regId);
+        const registrationDocRef = doc(db, "registration-2026", regId);
         await updateDoc(registrationDocRef, registrationData);
       } else {
         // Create a new registration
         // console.log("Creating new registration");
         const registrationRef = await addDoc(
-          collection(db, "registrations"),
+          collection(db, "registration-2026"),
           registrationData
         );
         regId = registrationRef.id;

@@ -48,7 +48,7 @@ export const formatDateTime = (timestamp) => {
 export const moveTempToLive = async () => {
   try {
     console.log(
-      "Starting migration from registrations-temp to registrations..."
+      "Starting migration from registrations-temp to registration-2026..."
     );
 
     // Get all documents from temp collection
@@ -68,7 +68,7 @@ export const moveTempToLive = async () => {
 
     // Use batch for better performance and atomicity
     const batch = writeBatch(db);
-    const liveCollectionRef = collection(db, "registrations");
+    const liveCollectionRef = collection(db, "registration-2026");
 
     let successCount = 0;
     let failureCount = 0;

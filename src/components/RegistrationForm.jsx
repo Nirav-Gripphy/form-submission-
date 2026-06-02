@@ -9,10 +9,10 @@ import {
   doc,
   runTransaction,
 } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import PhoneInput from "./PhoneInput";
 import PersonalInfo from "./PersonalInfo";
-import TravelingInfo from "./TravelingInfo";
+import ArrivalInfo from "./ArrivalInfo";
+import DepartureInfo from "./DepartureInfo";
 import AdditionalPeople from "./AdditionalPeople";
 import PaymentConfirmation from "./PaymentConfirmation";
 import ProgressBar from "./ProgressBar";
@@ -91,7 +91,7 @@ const RegistrationForm = ({ db, storage }) => {
     try {
       // Step 1: Check in 'registration' collection
       const registrationQuery = query(
-        collection(db, "registrations"),
+        collection(db, "registration-2026"),
         where("phoneNumber", "==", phoneNumber)
       );
       const registrationSnapshot = await getDocs(registrationQuery);
@@ -113,7 +113,7 @@ const RegistrationForm = ({ db, storage }) => {
 
         setRegistrationId(registrationSnapshot.docs[0].id);
         setUserExists(true);
-        setStep(regData?.paymentStatus === "pending" ? 1 : 4); // Step for already registered users
+        setStep(regData?.paymentStatus === "pending" ? 1 : 5); // Step for already registered users
         return;
       }
 
@@ -143,7 +143,7 @@ const RegistrationForm = ({ db, storage }) => {
         // Step 3: Not found anywhere — redirect
         // const googleFormUrl = process.env.REACT_APP_GOOGLE_FORM;
         // window.location.href = googleFormUrl;
-        setStep(5);
+        setStep(6);
         setUserData((prevData) => ({
           phoneNumber,
         }));
@@ -156,34 +156,6 @@ const RegistrationForm = ({ db, storage }) => {
     }
   };
 
-  // Handle file upload
-  const handleFileUpload = async (file) => {
-    if (!file) return null;
-
-    const storageRef = ref(
-      storage,
-      `photos/${userData.phoneNumber}_${Date.now()}`
-    );
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    return new Promise((resolve, reject) => {
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          // Progress can be tracked here if needed
-        },
-        (error) => {
-          reject(error);
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL);
-          });
-        }
-      );
-    });
-  };
-
   const generateUniqueBarcode = async () => {
     const maxRetries = 3;
     let attempt = 0;
@@ -192,7 +164,7 @@ const RegistrationForm = ({ db, storage }) => {
       try {
         const result = await runTransaction(db, async (transaction) => {
           // Reference to the counter document
-          const counterRef = doc(db, "counters", "barcodeCounter");
+          const counterRef = doc(db, "counter-2026", "barcodeCounter");
 
           // Get current counter value
           const counterDoc = await transaction.get(counterRef);
@@ -265,14 +237,18 @@ const RegistrationForm = ({ db, storage }) => {
 
         if (registrationId) {
           // Update existing registration
-          const registrationDocRef = doc(db, "registrations", registrationId);
+          const registrationDocRef = doc(
+            db,
+            "registration-2026",
+            registrationId
+          );
           await updateDoc(registrationDocRef, registrationData);
         } else {
           // Generate unique barcode for new registration
           const barcodeData = await generateUniqueBarcode();
 
           // Create new registration entry with barcode
-          const docRef = await addDoc(collection(db, "registrations"), {
+          const docRef = await addDoc(collection(db, "registration-2026"), {
             ...registrationData,
             ...barcodeData,
             createdAt: new Date(),
@@ -353,7 +329,6 @@ const RegistrationForm = ({ db, storage }) => {
           <PersonalInfo
             userData={userData}
             updateUserData={updateUserData}
-            handleFileUpload={handleFileUpload}
             nextStep={nextStep}
             prevStep={prevStep}
             loading={loading}
@@ -361,7 +336,7 @@ const RegistrationForm = ({ db, storage }) => {
         );
       case 2:
         return (
-          <TravelingInfo
+          <ArrivalInfo
             userData={userData}
             updateUserData={updateUserData}
             nextStep={nextStep}
@@ -371,7 +346,7 @@ const RegistrationForm = ({ db, storage }) => {
         );
       case 3:
         return (
-          <AdditionalPeople
+          <DepartureInfo
             userData={userData}
             updateUserData={updateUserData}
             nextStep={nextStep}
@@ -381,14 +356,25 @@ const RegistrationForm = ({ db, storage }) => {
         );
       case 4:
         return (
-          <PaymentConfirmation
+          <AdditionalPeople
             userData={userData}
             updateUserData={updateUserData}
+            nextStep={nextStep}
             prevStep={prevStep}
             loading={loading}
           />
         );
       case 5:
+        return (
+          <PaymentConfirmation
+            userData={userData}
+            updateUserData={updateUserData}
+            storage={storage}
+            prevStep={prevStep}
+            loading={loading}
+          />
+        );
+      case 6:
         return (
           <NoRegistation
             userData={userData}
@@ -439,8 +425,8 @@ const RegistrationForm = ({ db, storage }) => {
             />
           </div>
 
-          {step > 0 && step !== 5 && !isRegistrationClosed && (
-            <ProgressBar currentStep={step} totalSteps={4} />
+          {step > 0 && step !== 6 && !isRegistrationClosed && (
+            <ProgressBar currentStep={step} totalSteps={5} />
           )}
 
           {step === 0 && !isRegistrationClosed && (
@@ -453,7 +439,7 @@ const RegistrationForm = ({ db, storage }) => {
               >
                 तृतीय सम्मलेन रजिस्ट्रेशन
               </h4>
-              <span>26- 27 जुलाई 2025 </span>
+              <span>26- 27 जुलाई 2026 </span>
             </div>
           )}
 
