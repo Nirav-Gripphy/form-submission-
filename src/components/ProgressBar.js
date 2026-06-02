@@ -4,9 +4,9 @@ import "../styles/ProgressBar.css";
 const ProgressBar = ({ currentStep, totalSteps }) => {
   const steps = [
     { id: 1, label: "Personal Detail" },
-    { id: 2, label: "Traveling Detail" },
-    { id: 3, label: "Additional Guest" },
-    { id: 4, label: "Payment" },
+    { id: 2, label: "Arrival Detail" },
+    { id: 3, label: "Departure Detail" },
+    { id: 4, label: "Additional Guest" },
   ];
 
   return (

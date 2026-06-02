@@ -149,10 +149,10 @@ const DownloadModal = ({ selectedRegistration }) => {
                     </div>
                     <div className="flex-grow-1">
                       <h6 className="card-title mb-1 fw-semibold">
-                        Payment Receipt
+                        Registration Receipt
                       </h6>
                       <p className="card-text text-muted small mb-0">
-                        Download your payment receipt with transaction details.
+                        Download your registration receipt.
                       </p>
                     </div>
                     <button
@@ -254,11 +254,19 @@ const DownloadModal = ({ selectedRegistration }) => {
 export default DownloadModal;
 
 const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
+  const formatTrainName = (trainName, trainNameOther) => {
+    if (!trainName) return "";
+    if (trainName === "Others / अन्य" && trainNameOther) {
+      return `${trainName} (${trainNameOther})`;
+    }
+    return trainName;
+  };
+
   return (
     <div className="payment-success d-none" ref={receiptRef}>
       <div className="receipt-header">
         <h2>बेटी तेरापंथ की</h2>
-        <p>Payment Receipt</p>
+        <p>Registration Receipt</p>
       </div>
       <div className="success-icon">
         <i className="fas fa-check-circle"></i>
@@ -310,21 +318,35 @@ const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
           <span> आगमन यात्रा माध्यम:</span>
           <span>{selectedRegistration?.arrivalTravelMode}</span>
         </div>
+        {selectedRegistration?.arrivalTravelMode === "Train" &&
+          selectedRegistration?.arrivalTrainName && (
+            <div className="detail-item">
+              <span> आगमन ट्रेन:</span>
+              <span>
+                {formatTrainName(
+                  selectedRegistration?.arrivalTrainName,
+                  selectedRegistration?.arrivalTrainNameOther,
+                )}
+              </span>
+            </div>
+          )}
 
         <div className="detail-item">
           <span> प्रस्थान यात्रा माध्यम:</span>
           <span>{selectedRegistration?.departureTravelMode}</span>
         </div>
-
-        <div className="detail-item payment-details">
-          <span>भुगतान राशि:</span>
-          <span>₹ {selectedRegistration?.paymentAmount} </span>
-        </div>
-
-        <div className="detail-item">
-          <span>भुगतान आईडी:</span>
-          <span>{selectedRegistration?.paymentId}</span>
-        </div>
+        {selectedRegistration?.departureTravelMode === "Train" &&
+          selectedRegistration?.departureTrainName && (
+            <div className="detail-item">
+              <span> प्रस्थान ट्रेन:</span>
+              <span>
+                {formatTrainName(
+                  selectedRegistration?.departureTrainName,
+                  selectedRegistration?.departureTrainNameOther,
+                )}
+              </span>
+            </div>
+          )}
 
         <div className="detail-item">
           <span>दिनांक:</span>

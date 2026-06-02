@@ -70,9 +70,9 @@ const TermsAndConditions = () => {
                 fontWeight: 600,
               }}
             >
-              तृतीय सम्मलेन रजिस्ट्रेशन
+              चतुर्थ सम्मलेन रजिस्ट्रेशन
             </h4>
-            <span>26- 27 जुलाई 2025 </span>
+            <span>1 - 2 अगस्त 2026 </span>
           </div>
 
           <div

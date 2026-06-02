@@ -2,11 +2,14 @@
   "name": "beti-terapanth-ki",
   "version": "0.1.0",
   "private": true,
-    "dependencies": {
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
+    "ajv": "^8.12.0",
+    "ajv-keywords": "^5.1.0",
     "axios": "^1.9.0",
     "bootstrap": "^5.3.6",
     "exceljs": "^4.4.0",

@@ -100,13 +100,11 @@ export const exportToExcelWithExcelJS = async (
       "Arrival Date",
       "Arrival Time",
       "Arrival Travel Mode",
+      "Arrival Train Name",
       "Departure Date",
       "Departure Time",
       "Departure Travel Mode",
-      "Payment Status",
-      "Payment Amount",
-      "Payment ID",
-      "Order ID",
+      "Departure Train Name",
       "Primary Barcode",
       "Spouse Barcode",
     ];
@@ -155,13 +153,11 @@ export const exportToExcelWithExcelJS = async (
         registration.arrivalDate || "",
         registration.arrivalTime || "",
         registration.arrivalTravelMode || "",
+        registration.arrivalTrainName || "",
         registration.departureDate || "",
         registration.departureTime || "",
         registration.departureTravelMode || "",
-        registration.paymentStatus || "",
-        registration.paymentAmount || "",
-        registration.paymentId || "",
-        registration.orderId || "",
+        registration.departureTrainName || "",
         "", // Placeholder for primary barcode
         "", // Placeholder for spouse barcode
       ];
@@ -290,13 +286,11 @@ export const exportToExcelWithReactExcel = async (
           arrivalDate: registration.arrivalDate || "",
           arrivalTime: registration.arrivalTime || "",
           arrivalTravelMode: registration.arrivalTravelMode || "",
+          arrivalTrainName: registration.arrivalTrainName || "",
           departureDate: registration.departureDate || "",
           departureTime: registration.departureTime || "",
           departureTravelMode: registration.departureTravelMode || "",
-          paymentStatus: registration.paymentStatus || "",
-          paymentAmount: registration.paymentAmount || "",
-          paymentId: registration.paymentId || "",
-          orderId: registration.orderId || "",
+          departureTrainName: registration.departureTrainName || "",
           primaryBarcode: primaryBarcode || "",
           spouseBarcode: spouseBarcode || "",
         };
@@ -389,13 +383,11 @@ export const exportToCSV = (data, filename = "registrations-export.csv") => {
       "Arrival Date": registration.arrivalDate || "",
       "Arrival Time": registration.arrivalTime || "",
       "Arrival Travel Mode": registration.arrivalTravelMode || "",
+      "Arrival Train Name": registration.arrivalTrainName || "",
       "Departure Date": registration.departureDate || "",
       "Departure Time": registration.departureTime || "",
       "Departure Travel Mode": registration.departureTravelMode || "",
-      "Payment Status": registration.paymentStatus || "",
-      "Payment Amount": registration.paymentAmount || "",
-      "Payment ID": registration.paymentId || "",
-      "Order ID": registration.orderId || "",
+      "Departure Train Name": registration.departureTrainName || "",
     }));
 
     const headers = Object.keys(csvData[0]);

@@ -18,6 +18,13 @@ import PaymentConfirmation from "./PaymentConfirmation";
 import ProgressBar from "./ProgressBar";
 import "../styles/RegistrationForm.css";
 import { NoRegistation } from "./NoRegistation";
+import { clippingParents } from "@popperjs/core";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
 
 const RegistrationForm = ({ db, storage }) => {
   // Registration closing date - Today at 12:00 PM IST for testing
@@ -92,7 +99,7 @@ const RegistrationForm = ({ db, storage }) => {
       // Step 1: Check in 'registration' collection
       const registrationQuery = query(
         collection(db, "registration-2026"),
-        where("phoneNumber", "==", phoneNumber)
+        where("phoneNumber", "==", phoneNumber),
       );
       const registrationSnapshot = await getDocs(registrationQuery);
 
@@ -120,7 +127,7 @@ const RegistrationForm = ({ db, storage }) => {
       // Step 2: Check in 'users' collection
       const userQuery = query(
         collection(db, "users"),
-        where("Contact No", "==", Number(phoneNumber))
+        where("Contact No", "==", Number(phoneNumber)),
       );
       const userSnapshot = await getDocs(userQuery);
 
@@ -240,7 +247,7 @@ const RegistrationForm = ({ db, storage }) => {
           const registrationDocRef = doc(
             db,
             "registration-2026",
-            registrationId
+            registrationId,
           );
           await updateDoc(registrationDocRef, registrationData);
         } else {
@@ -271,9 +278,129 @@ const RegistrationForm = ({ db, storage }) => {
     }
   };
 
-  // Navigate to next step (simplified since saving is handled in updateUserData)
-  const nextStep = () => {
-    setStep((prevStep) => prevStep + 1);
+  // Handle file upload
+  const handleFileUpload = async (
+    file,
+    targetRegistrationId = registrationId,
+  ) => {
+    if (!file) return null;
+
+    const storageRef = ref(
+      storage,
+      `registration-2026/${targetRegistrationId}/${file.name}_${Date.now()}`,
+    );
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Progress can be tracked here if needed
+        },
+        (error) => {
+          reject(error);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            resolve(downloadURL);
+          });
+        },
+      );
+    });
+  };
+
+  const deleteFileByUrl = async (fileURL) => {
+    if (!fileURL) return;
+    try {
+      const fileRef = ref(storage, fileURL);
+      await deleteObject(fileRef);
+    } catch (deleteError) {
+      // Continue flow even if old file is already missing or URL is invalid.
+      console.error("Error deleting old ticket file:", deleteError);
+    }
+  };
+
+  const ensureRegistrationId = async () => {
+    if (registrationId) return registrationId;
+
+    const barcodeData = await generateUniqueBarcode();
+    const docRef = await addDoc(collection(db, "registration-2026"), {
+      ...userData,
+      ...barcodeData,
+      registrationStep: step,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const newRegistrationId = docRef.id;
+    setRegistrationId(newRegistrationId);
+    setUserData((prevData) => ({
+      ...prevData,
+      registrationId: newRegistrationId,
+      id: newRegistrationId,
+      ...barcodeData,
+    }));
+
+    return newRegistrationId;
+  };
+
+  // Navigate to next step with optional upload processing
+  const nextStep = async (stepData = {}) => {
+    try {
+      setLoading(true);
+      let processedData = { ...stepData };
+
+      if (processedData.arrivalTicketFile) {
+        const safeRegistrationId = await ensureRegistrationId();
+        await deleteFileByUrl(userData.arrivalTicketURL);
+        const downloadURL = await handleFileUpload(
+          processedData.arrivalTicketFile,
+          safeRegistrationId,
+        );
+        processedData.arrivalTicketURL = downloadURL;
+        processedData.arrivalTicketFileName =
+          processedData.arrivalTicketFile.name;
+        delete processedData.arrivalTicketFile;
+        if (!safeRegistrationId) return;
+      }
+
+      if (processedData.departureTicketFile) {
+        const safeRegistrationId = await ensureRegistrationId();
+        await deleteFileByUrl(userData.departureTicketURL);
+        const downloadURL = await handleFileUpload(
+          processedData.departureTicketFile,
+          safeRegistrationId,
+        );
+        processedData.departureTicketURL = downloadURL;
+        processedData.departureTicketFileName =
+          processedData.departureTicketFile.name;
+        delete processedData.departureTicketFile;
+        if (!safeRegistrationId) return;
+      }
+
+      if (processedData.removeArrivalTicket) {
+        processedData.arrivalTicketURL = "";
+        processedData.arrivalTicketFileName = "";
+      }
+      delete processedData.removeArrivalTicket;
+
+      if (processedData.removeDepartureTicket) {
+        processedData.departureTicketURL = "";
+        processedData.departureTicketFileName = "";
+      }
+      delete processedData.removeDepartureTicket;
+
+      if (Object.keys(processedData).length > 0) {
+        await updateUserData(processedData);
+      }
+
+      setStep((prevStep) => prevStep + 1);
+    } catch (uploadError) {
+      console.error("Error in next step:", uploadError);
+      setError("टिकट अपलोड करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Navigate to previous step
@@ -309,7 +436,7 @@ const RegistrationForm = ({ db, storage }) => {
 
   const renderStep = () => {
     // If registration is closed and we're on step 0 (phone input), show closed message
-    if (isRegistrationClosed && step === 0) { 
+    if (isRegistrationClosed && step === 0) {
       return <RegistrationClosed />;
     }
 
@@ -437,9 +564,9 @@ const RegistrationForm = ({ db, storage }) => {
                   fontWeight: 600,
                 }}
               >
-                तृतीय सम्मलेन रजिस्ट्रेशन
+                चतुर्थ सम्मलेन रजिस्ट्रेशन
               </h4>
-              <span>26- 27 जुलाई 2026 </span>
+              <span>1 - 2 अगस्त 2026 </span>
             </div>
           )}
 

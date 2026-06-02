@@ -25,6 +25,13 @@ export const PaymentSuccessView = ({
   };
 
   const [isPrintingReceipt, setIsPrintingReceipt] = useState(false);
+  const formatTrainName = (trainName, trainNameOther) => {
+    if (!trainName) return "";
+    if (trainName === "Others / अन्य" && trainNameOther) {
+      return `${trainName} (${trainNameOther})`;
+    }
+    return trainName;
+  };
 
   const handleReceiptPrint = () => {
     setIsPrintingReceipt(true); // Hide barcode sections
@@ -46,7 +53,6 @@ export const PaymentSuccessView = ({
         <div className="payment-success" ref={receiptRef}>
           <div className="receipt-header">
             <h2>बेटी तेरापंथ की</h2>
-            <p>Payment Receipt</p>
           </div>
           <div className="success-icon">
             <i className="fas fa-check-circle"></i>
@@ -106,21 +112,35 @@ export const PaymentSuccessView = ({
               <span> आगमन यात्रा माध्यम:</span>
               <span>{userData.arrivalTravelMode}</span>
             </div>
+            {userData.arrivalTravelMode === "Train" && userData.arrivalTrainName && (
+              <div className="detail-item">
+                <span> आगमन ट्रेन:</span>
+                <span>
+                  {formatTrainName(
+                    userData.arrivalTrainName,
+                    userData.arrivalTrainNameOther,
+                  )}
+                </span>
+              </div>
+            )}
 
             <div className="detail-item">
               <span> प्रस्थान यात्रा माध्यम:</span>
               <span>{userData.departureTravelMode}</span>
             </div>
+            {userData.departureTravelMode === "Train" &&
+              userData.departureTrainName && (
+                <div className="detail-item">
+                  <span> प्रस्थान ट्रेन:</span>
+                  <span>
+                    {formatTrainName(
+                      userData.departureTrainName,
+                      userData.departureTrainNameOther,
+                    )}
+                  </span>
+                </div>
+              )}
 
-            <div className="detail-item payment-details">
-              <span>भुगतान राशि:</span>
-              <span>₹{calculateAmount()}</span>
-            </div>
-
-            <div className="detail-item">
-              <span>भुगतान आईडी:</span>
-              <span>{paymentId}</span>
-            </div>
 
             <div className="detail-item">
               <span>दिनांक:</span>

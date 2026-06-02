@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import "../styles/AdditionalPeople.css";
 
-const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
+const AdditionalPeople = ({ userData, nextStep, prevStep, loading }) => {
   const [localData, setLocalData] = useState({
     additionalPeople: userData.additionalPeople || [],
   });
@@ -15,6 +15,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
+    if (loading) return;
     const { name, value } = e.target;
 
     setNewPerson((prev) => ({
@@ -47,6 +48,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
   };
 
   const addPerson = () => {
+    if (loading) return;
     if (!validatePersonForm()) return;
 
     setLocalData((prev) => ({
@@ -64,6 +66,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
   };
 
   const removePerson = (id) => {
+    if (loading) return;
     setLocalData((prev) => ({
       additionalPeople: prev.additionalPeople.filter(
         (person) => person.id !== id
@@ -71,15 +74,16 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Update the user data
-    updateUserData({
+    // Final submission now happens here (old post-payment flow starts next)
+    await nextStep({
       additionalPeople: localData.additionalPeople,
+      paymentStatus: "completed",
+      paymentAmount: userData.hasHusband ? 1000 : 500,
+      paymentCompletedAt: new Date(),
     });
-
-    nextStep();
   };
 
   return (
@@ -97,6 +101,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
               type="button"
               className="btn btn-primary"
               onClick={() => setShowForm(true)}
+              disabled={loading}
             >
               <i className="fas fa-plus"></i> Add Guest
             </button>
@@ -115,6 +120,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
                 value={newPerson.name}
                 onChange={handleInputChange}
                 placeholder="अतिथि का नाम"
+                disabled={loading}
               />
               {errors.name && (
                 <div className="invalid-feedback">{errors.name}</div>
@@ -144,6 +150,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
                 name="relation"
                 value={newPerson.relation}
                 onChange={handleInputChange}
+                disabled={loading}
               >
                 <option value={""} selected>
                   Select Relation/संबंध
@@ -164,6 +171,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
                 type="button"
                 className="btn btn-outline-primary add-person-btn"
                 onClick={addPerson}
+                disabled={loading}
               >
                 <i className="fas fa-plus"></i> Add
               </button>
@@ -171,10 +179,12 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
                 type="button"
                 className="btn btn-outline-secondary"
                 onClick={() => {
+                  if (loading) return;
                   setShowForm(false);
                   setNewPerson({ name: "", relation: "" });
                   setErrors({});
                 }}
+                disabled={loading}
               >
                 Cancel
               </button>
@@ -198,6 +208,7 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
                     type="button"
                     className="btn btn-sm btn-danger"
                     onClick={() => removePerson(person.id)}
+                    disabled={loading}
                   >
                     Remove
                   </button>
@@ -212,11 +223,27 @@ const AdditionalPeople = ({ userData, updateUserData, nextStep, prevStep }) => {
             type="button"
             className="btn btn-secondary secondry-cutom-btn"
             onClick={prevStep}
+            disabled={loading}
           >
             Previous
           </button>
-          <button type="submit" className="btn btn-primary primary-custom-btn">
-            Next
+          <button
+            type="submit"
+            className="btn btn-primary primary-custom-btn"
+            disabled={loading}
+          >
+            {loading ? (
+              <span>
+                <span
+                  className="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                <span className="ms-2">Submitting...</span>
+              </span>
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </form>

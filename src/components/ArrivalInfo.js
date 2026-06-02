@@ -33,28 +33,47 @@ const uploadStyles = `
   .file-info { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 8px 12px; margin-top: 8px; font-size: 12px; color: #6c757d; }
 `;
 
-const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
+const ArrivalInfo = ({ userData, nextStep, prevStep, loading }) => {
+  const existingArrivalTicketURL = userData.arrivalTicketURL || "";
+  const predefinedArrivalTrains = [
+    "अरावली एक्सप्रेस (14702)",
+    "रणकपुर एक्सप्रेस (14708)",
+    "भुज-बरेली एक्सप्रेस (14322)",
+    "रणथंभौर एक्सप्रेस (12465)",
+  ];
   const [localData, setLocalData] = useState({
     arrivalDate: userData.arrivalDate || "",
     arrivalTime: userData.arrivalTime || "",
     arrivalTravelMode: userData.arrivalTravelMode || "",
-    arrivalTrainName: userData.arrivalTrainName || "",
+    arrivalTrainName: userData.arrivalTrainNameOther
+      ? "__other__"
+      : userData.arrivalTrainName || "",
+    arrivalTrainNameOther: userData.arrivalTrainNameOther || "",
   });
   const [errors, setErrors] = useState({});
   const [arrivalTicketFile, setArrivalTicketFile] = useState(null);
   const [isTicketDragging, setIsTicketDragging] = useState(false);
-  const [ticketPreview, setTicketPreview] = useState(null);
-  const [ticketType, setTicketType] = useState("");
+  const [ticketPreview, setTicketPreview] = useState(existingArrivalTicketURL || null);
+  const [ticketType, setTicketType] = useState(
+    existingArrivalTicketURL.toLowerCase().includes(".pdf")
+      ? "application/pdf"
+      : existingArrivalTicketURL
+        ? "image/url"
+        : "",
+  );
+  const [removeExistingTicket, setRemoveExistingTicket] = useState(false);
 
   const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 
   const handleInputChange = (e) => {
+    if (loading) return;
     const { name, value } = e.target;
     setLocalData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
   const processTicketFile = (file) => {
+    if (loading) return;
     if (!file) return;
     if (!allowedTypes.includes(file.type)) {
       setErrors((prev) => ({ ...prev, arrivalTicketFile: "केवल JPG, PNG या PDF फ़ाइल अपलोड करें" }));
@@ -65,6 +84,7 @@ const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
     }
     setArrivalTicketFile(file);
     setTicketType(file.type);
+    setRemoveExistingTicket(false);
     setErrors((prev) => ({ ...prev, arrivalTicketFile: null }));
     if (file.type === "application/pdf") {
       setTicketPreview("pdf");
@@ -81,27 +101,51 @@ const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
     if (!localData.arrivalDate) newErrors.arrivalDate = "आगमन तिथि आवश्यक है";
     if (!localData.arrivalTime) newErrors.arrivalTime = "आगमन समय आवश्यक है";
     if (!localData.arrivalTravelMode) newErrors.arrivalTravelMode = "आगमन यात्रा का माध्यम आवश्यक है";
-    if ((localData.arrivalTravelMode === "Flight" || localData.arrivalTravelMode === "Train") && !arrivalTicketFile) {
+    if (
+      (localData.arrivalTravelMode === "Flight" || localData.arrivalTravelMode === "Train") &&
+      !arrivalTicketFile &&
+      !ticketPreview
+    ) {
       newErrors.arrivalTicketFile = "टिकट अपलोड करना आवश्यक है";
     }
     if (localData.arrivalTravelMode === "Train" && !localData.arrivalTrainName) {
       newErrors.arrivalTrainName = "ट्रेन का चयन आवश्यक है";
     }
+    if (
+      localData.arrivalTravelMode === "Train" &&
+      localData.arrivalTrainName === "__other__" &&
+      !localData.arrivalTrainNameOther?.trim()
+    ) {
+      newErrors.arrivalTrainName = "ट्रेन का नाम आवश्यक है";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    updateUserData({
+
+    const requiresTicket =
+      localData.arrivalTravelMode === "Flight" ||
+      localData.arrivalTravelMode === "Train";
+
+    await nextStep({
       arrivalDate: localData.arrivalDate,
       arrivalTime: localData.arrivalTime,
       arrivalTravelMode: localData.arrivalTravelMode,
-      arrivalTrainName: localData.arrivalTrainName,
-      hasArrivalTicket: !!arrivalTicketFile,
+      arrivalTrainName:
+        localData.arrivalTrainName === "__other__"
+          ? "Others / अन्य"
+          : localData.arrivalTrainName,
+      arrivalTrainNameOther:
+        localData.arrivalTrainName === "__other__"
+          ? localData.arrivalTrainNameOther?.trim()
+          : "",
+      hasArrivalTicket: requiresTicket && (!!arrivalTicketFile || !!ticketPreview),
+      arrivalTicketFile,
+      removeArrivalTicket: requiresTicket ? removeExistingTicket : true,
     });
-    nextStep();
   };
 
   const travelModes = [
@@ -109,6 +153,8 @@ const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
     { value: "Train", label: "Train/रेल" },
     { value: "Car", label: "Car/कार" },
   ];
+  const isTrainMode = localData.arrivalTravelMode === "Train";
+  const isOtherTrainSelected = localData.arrivalTrainName === "__other__";
 
   return (
     <div className="traveling-info-container">
@@ -117,7 +163,7 @@ const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="arrivalDate" className="isRequired">Arrival Date/आगमन तिथि</label>
-          <select className={`form-select ${errors.arrivalDate ? "is-invalid" : ""}`} id="arrivalDate" name="arrivalDate" value={localData.arrivalDate} onChange={handleInputChange}>
+          <select className={`form-select ${errors.arrivalDate ? "is-invalid" : ""}`} id="arrivalDate" name="arrivalDate" value={localData.arrivalDate} onChange={handleInputChange} disabled={loading}>
             <option value={""}>आगमन तिथि चुनें</option>
             <option value="2026-07-31">31 जुलाई 2026</option>
             <option value="2026-08-01">1 अगस्त 2026</option>
@@ -126,7 +172,7 @@ const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
         </div>
         <div className="form-group">
           <label htmlFor="arrivalTime" className="isRequired">Arrival Time/आगमन समय</label>
-          <input type="time" className={`form-control ${errors.arrivalTime ? "is-invalid" : ""}`} id="arrivalTime" name="arrivalTime" value={localData.arrivalTime} onChange={handleInputChange} />
+          <input type="time" className={`form-control ${errors.arrivalTime ? "is-invalid" : ""}`} id="arrivalTime" name="arrivalTime" value={localData.arrivalTime} onChange={handleInputChange} disabled={loading} />
           {errors.arrivalTime && <div className="invalid-feedback">{errors.arrivalTime}</div>}
         </div>
         <div className="form-group">
@@ -134,7 +180,7 @@ const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
           <div className={`travel-mode-options ${errors.arrivalTravelMode ? "is-invalid" : ""}`}>
             {travelModes.map((mode) => (
               <div className="form-check form-check-inline" key={mode.value}>
-                <input type="radio" className="form-check-input" id={`Arrival${mode.value}Mode`} name="arrivalTravelMode" value={mode.value} checked={localData.arrivalTravelMode === mode.value} onChange={handleInputChange} />
+                <input type="radio" className="form-check-input" id={`Arrival${mode.value}Mode`} name="arrivalTravelMode" value={mode.value} checked={localData.arrivalTravelMode === mode.value} onChange={handleInputChange} disabled={loading} />
                 <label className="form-check-label" htmlFor={`Arrival${mode.value}Mode`}>{mode.label}</label>
               </div>
             ))}
@@ -146,16 +192,17 @@ const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
             <div className="form-group">
               <label htmlFor="arrivalTicket" className="isRequired">Ticket Upload/टिकट अपलोड (Image/PDF)</label>
               <div className={`ticket-upload-container ${isTicketDragging ? "dragging" : ""} ${errors.arrivalTicketFile ? "error" : ""}`}
-                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsTicketDragging(true); }}
-                onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsTicketDragging(false); }}
-                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setIsTicketDragging(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) processTicketFile(e.dataTransfer.files[0]); }}
+                style={{ pointerEvents: loading ? "none" : "auto", opacity: loading ? 0.7 : 1 }}
+                onDragOver={(e) => { if (loading) return; e.preventDefault(); e.stopPropagation(); setIsTicketDragging(true); }}
+                onDragLeave={(e) => { if (loading) return; e.preventDefault(); e.stopPropagation(); setIsTicketDragging(false); }}
+                onDrop={(e) => { if (loading) return; e.preventDefault(); e.stopPropagation(); setIsTicketDragging(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) processTicketFile(e.dataTransfer.files[0]); }}
               >
                 {!ticketPreview ? (
                   <div className="upload-placeholder">
                     <div className="upload-icon"><i className="bi bi-upload fs-1"></i></div>
                     <p className="upload-text">टिकट अपलोड करने के लिए क्लिक करें या यहां खींचें</p>
                     <p className="upload-requirements">केवल JPG, PNG या PDF फाइलें</p>
-                    <input type="file" className="file-input" id="arrivalTicket" accept="image/jpeg,image/jpg,image/png,application/pdf,.pdf" onChange={(e) => processTicketFile(e.target.files?.[0])} />
+                    <input type="file" className="file-input" id="arrivalTicket" accept="image/jpeg,image/jpg,image/png,application/pdf,.pdf" onChange={(e) => processTicketFile(e.target.files?.[0])} disabled={loading} />
                   </div>
                 ) : (
                   <div className="preview-container">
@@ -166,33 +213,76 @@ const ArrivalInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
                     )}
                     {arrivalTicketFile && <div className="file-info">फ़ाइल: {arrivalTicketFile.name}</div>}
                     <div className="preview-actions">
-                      <button type="button" className="change-photo-btn" onClick={() => document.getElementById("arrivalTicket").click()}><i className="bi bi-pencil-square" style={{ width: "16px" }} />बदलें</button>
-                      <button type="button" className="remove-photo-btn" onClick={() => { setArrivalTicketFile(null); setTicketPreview(null); setTicketType(""); setErrors((prev) => ({ ...prev, arrivalTicketFile: null })); }}><i className="bi bi-trash" style={{ width: "16px" }} />हटाएं</button>
+                      <button type="button" className="change-photo-btn" onClick={() => document.getElementById("arrivalTicket").click()} disabled={loading}><i className="bi bi-pencil-square" style={{ width: "16px" }} />बदलें</button>
+                      <button type="button" className="remove-photo-btn" onClick={() => { setArrivalTicketFile(null); setTicketPreview(null); setTicketType(""); setRemoveExistingTicket(true); setErrors((prev) => ({ ...prev, arrivalTicketFile: null })); }} disabled={loading}><i className="bi bi-trash" style={{ width: "16px" }} />हटाएं</button>
                     </div>
-                    <input type="file" className="file-input hidden" id="arrivalTicket" accept="image/jpeg,image/jpg,image/png,application/pdf,.pdf" onChange={(e) => processTicketFile(e.target.files?.[0])} />
+                    <input type="file" className="file-input hidden" id="arrivalTicket" accept="image/jpeg,image/jpg,image/png,application/pdf,.pdf" onChange={(e) => processTicketFile(e.target.files?.[0])} disabled={loading} />
                   </div>
                 )}
               </div>
               {errors.arrivalTicketFile && <div className="error-message text-start">{errors.arrivalTicketFile}</div>}
             </div>
-            {localData.arrivalTravelMode === "Train" && (
+            {isTrainMode && (
               <div className="form-group">
                 <label htmlFor="arrivalTrainName" className="isRequired">Train Name/ट्रेन का नाम</label>
-                <select className={`form-select ${errors.arrivalTrainName ? "is-invalid" : ""}`} id="arrivalTrainName" name="arrivalTrainName" value={localData.arrivalTrainName} onChange={handleInputChange}>
+                <select className={`form-select ${errors.arrivalTrainName ? "is-invalid" : ""}`} id="arrivalTrainName" name="arrivalTrainName" value={localData.arrivalTrainName} onChange={handleInputChange} disabled={loading}>
                   <option value={""}>ट्रेन चुनें</option>
-                  <option value="अरावली एक्सप्रेस (14702)">अरावली एक्सप्रेस (14702)</option>
-                  <option value="रणकपुर एक्सप्रेस (14708)">रणकपुर एक्सप्रेस (14708)</option>
-                  <option value="भुज-बरेली एक्सप्रेस (14322)">भुज-बरेली एक्सप्रेस (14322)</option>
-                  <option value="रणथंभौर एक्सप्रेस (12465)">रणथंभौर एक्सप्रेस (12465)</option>
+                  {predefinedArrivalTrains.map((train) => (
+                    <option key={train} value={train}>
+                      {train}
+                    </option>
+                  ))}
+                  <option value="__other__">Others / अन्य</option>
                 </select>
+                {isOtherTrainSelected && (
+                  <input
+                    type="text"
+                    className={`form-control mt-2 ${errors.arrivalTrainName ? "is-invalid" : ""}`}
+                    id="arrivalTrainNameOther"
+                    name="arrivalTrainName"
+                    value={localData.arrivalTrainNameOther || ""}
+                    onChange={(e) =>
+                      setLocalData((prev) => ({
+                        ...prev,
+                        arrivalTrainNameOther: e.target.value,
+                      }))
+                    }
+                    placeholder="ट्रेन का नाम दर्ज करें"
+                    disabled={loading}
+                  />
+                )}
                 {errors.arrivalTrainName && <div className="invalid-feedback">{errors.arrivalTrainName}</div>}
               </div>
             )}
           </>
         )}
         <div className="form-buttons">
-          <button type="button" className="btn btn-secondary secondry-cutom-btn" onClick={prevStep}>Previous</button>
-          <button type="submit" className="btn btn-primary primary-custom-btn">Next</button>
+          <button
+            type="button"
+            className="btn btn-secondary secondry-cutom-btn"
+            onClick={prevStep}
+            disabled={loading}
+          >
+            Previous
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary primary-custom-btn"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Uploading...
+              </>
+            ) : (
+              "Next"
+            )}
+          </button>
         </div>
       </form>
     </div>

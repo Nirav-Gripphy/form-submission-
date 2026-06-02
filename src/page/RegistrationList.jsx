@@ -12,7 +12,6 @@ import {
 import { formatDate, formatDateTime, moveTempToLive } from "../Utility/global";
 import { Pagination } from "../components/Pagination";
 import DetailsModal from "../components/DetailsModal";
-import PaymentModal from "../components/PaymentModal";
 import GuestModal from "../components/GuestModal";
 import BarcodeUpdater from "../Utility/BarcodeUpdater";
 import { exportToExcelWithBarcodeImages, exportToExcelWithExcelJS } from "../Utility/exportUtils";
@@ -67,8 +66,6 @@ const useSearch = (registrations, searchTerm) => {
         registration.state,
         registration.primaryBarcodeId,
         registration.husbandName,
-        registration.paymentId,
-        registration.orderId,
       ];
 
       return searchableFields.some(
@@ -119,17 +116,6 @@ const usePagination = (items, itemsPerPage = 10) => {
 };
 
 // Sub-components for better organization
-const PaymentStatusBadge = React.memo(({ status }) => {
-  const statusConfig = {
-    completed: { text: "Success", className: "badge bg-success" },
-    pending: { text: "Pending", className: "badge bg-warning text-dark" },
-    failed: { text: "Failed", className: "badge bg-danger" },
-  };
-
-  const config = statusConfig[status] || statusConfig.failed;
-  return <span className={config.className}>{config.text}</span>;
-});
-
 const UserAvatar = React.memo(({ photoURL, name, size = 40 }) => {
   const [imageError, setImageError] = useState(false);
 
@@ -253,51 +239,6 @@ const StatsDisplay = React.memo(({ filteredRegistrations }) => {
   );
 });
 
-const TabNavigation = React.memo(
-  ({ activeTab, onTabChange, successCount, pendingCount }) => (
-    <div className="card mb-4 shadow-sm">
-      <div className="card-body">
-        <ul
-          className="nav nav-tabs card-header-tabs"
-          id="registrationTabs"
-          role="tablist"
-        >
-          <li className="nav-item" role="presentation">
-            <button
-              className={`nav-link ${activeTab === "success" ? "active" : ""}`}
-              id="success-tab"
-              type="button"
-              role="tab"
-              aria-controls="success"
-              aria-selected={activeTab === "success"}
-              onClick={() => onTabChange("success")}
-            >
-              Success
-              <span className="badge bg-success ms-2">{successCount}</span>
-            </button>
-          </li>
-          <li className="nav-item" role="presentation">
-            <button
-              className={`nav-link ${activeTab === "pending" ? "active" : ""}`}
-              id="pending-tab"
-              type="button"
-              role="tab"
-              aria-controls="pending"
-              aria-selected={activeTab === "pending"}
-              onClick={() => onTabChange("pending")}
-            >
-              Pending
-              <span className="badge bg-warning text-dark ms-2">
-                {pendingCount}
-              </span>
-            </button>
-          </li>
-        </ul>
-      </div>
-    </div>
-  )
-);
-
 const ActionButtons = React.memo(({ registration, onOpenModal }) => (
   <div className="btn-group" role="group" aria-label="Registration actions">
     <button
@@ -308,15 +249,6 @@ const ActionButtons = React.memo(({ registration, onOpenModal }) => (
       aria-label={`View details for ${registration.name}`}
     >
       <i className="bi bi-eye" aria-hidden="true"></i>
-    </button>
-    <button
-      type="button"
-      className="btn btn-outline-success btn-sm"
-      onClick={() => onOpenModal(registration, "payment")}
-      title="View payment details"
-      aria-label={`View payment details for ${registration.name}`}
-    >
-      <i className="bi bi-credit-card" aria-hidden="true"></i>
     </button>
     <button
       type="button"
@@ -352,32 +284,7 @@ const RegistrationList = () => {
   const { registrations, loading, error, refetch } = useRegistrations();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegistration, setSelectedRegistration] = useState(null);
-  const [activeTab, setActiveTab] = useState("success");
-
-  // Filter registrations by payment status based on active tab
-  const statusFilteredRegistrations = useMemo(() => {
-    const targetStatus = activeTab === "success" ? "completed" : "pending";
-    return registrations.filter(
-      (registration) => registration.paymentStatus === targetStatus
-    );
-  }, [registrations, activeTab]);
-
-  // Apply search filter to status-filtered registrations
-  const filteredRegistrations = useSearch(
-    statusFilteredRegistrations,
-    searchTerm
-  );
-
-  // Calculate counts for tabs
-  const successCount = useMemo(
-    () => registrations.filter((r) => r.paymentStatus === "completed").length,
-    [registrations]
-  );
-
-  const pendingCount = useMemo(
-    () => registrations.filter((r) => r.paymentStatus === "pending").length,
-    [registrations]
-  );
+  const filteredRegistrations = useSearch(registrations, searchTerm);
 
   const {
     currentItems,
@@ -404,12 +311,6 @@ const RegistrationList = () => {
     } catch (err) {
       console.error("Error opening modal:", err);
     }
-  }, []);
-
-  // Reset search when tab changes
-  const handleTabChange = useCallback((tab) => {
-    setActiveTab(tab);
-    setSearchTerm(""); // Clear search when switching tabs
   }, []);
 
   // Loading state
@@ -457,14 +358,6 @@ const RegistrationList = () => {
 
       {/* Main Content */}
       <main className="container-fluid py-4">
-        {/* Tab Navigation */}
-        <TabNavigation
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          successCount={successCount}
-          pendingCount={pendingCount}
-        />
-
         {/* Search and Stats */}
         <div className="card mb-4 shadow-sm">
           <div className="card-body">
@@ -489,12 +382,12 @@ const RegistrationList = () => {
                   aria-hidden="true"
                 ></i>
                 <h4 className="mt-3 text-muted">
-                  No {activeTab} registrations found
+                  No registrations found
                 </h4>
                 <p className="text-muted">
                   {searchTerm
                     ? "Try adjusting your search terms"
-                    : `No ${activeTab} registration data available`}
+                    : "No registration data available"}
                 </p>
               </div>
             ) : (
@@ -511,7 +404,6 @@ const RegistrationList = () => {
                         <th scope="col" className="d-none d-lg-table-cell">
                           Registration Time
                         </th>
-                        <th scope="col">Payment Status</th>
                         <th scope="col">Actions</th>
                       </tr>
                     </thead>
@@ -578,11 +470,6 @@ const RegistrationList = () => {
                             {formatDateTime(registration.updatedAt)}
                           </td>
                           <td>
-                            <PaymentStatusBadge
-                              status={registration.paymentStatus}
-                            />
-                          </td>
-                          <td>
                             <ActionButtons
                               registration={registration}
                               onOpenModal={openModal}
@@ -616,12 +503,6 @@ const RegistrationList = () => {
         key={"DetailModal"}
       />
 
-      {/* Payment Modal */}
-      <PaymentModal
-        selectedRegistration={selectedRegistration}
-        key={"payment_modal"}
-      />
-
       {/* Guest Modal */}
       <GuestModal
         selectedRegistration={selectedRegistration}
@@ -649,11 +530,9 @@ const RegistrationList = () => {
 };
 
 // Set display names for better debugging
-PaymentStatusBadge.displayName = "PaymentStatusBadge";
 UserAvatar.displayName = "UserAvatar";
 SearchInput.displayName = "SearchInput";
 StatsDisplay.displayName = "StatsDisplay";
-TabNavigation.displayName = "TabNavigation";
 ActionButtons.displayName = "ActionButtons";
 Pagination.displayName = "Pagination";
 

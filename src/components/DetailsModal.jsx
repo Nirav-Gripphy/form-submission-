@@ -2,6 +2,14 @@ import React, { useState } from "react";
 import { formatDate, formatDateTime } from "../Utility/global";
 
 const DetailsModal = ({ selectedRegistration }) => {
+  const formatTrainName = (trainName, trainNameOther) => {
+    if (!trainName) return "";
+    if (trainName === "Others / अन्य" && trainNameOther) {
+      return `${trainName} (${trainNameOther})`;
+    }
+    return trainName;
+  };
+
   const UserAvatar = React.memo(({ photoURL, name, size = 40 }) => {
     const [imageError, setImageError] = useState(false);
 
@@ -200,6 +208,26 @@ const DetailsModal = ({ selectedRegistration }) => {
                   <div>
                     <h6 className="mb-2">Registration Details:</h6>
                     <div className="small">
+                      {selectedRegistration.arrivalTravelMode === "Train" &&
+                        selectedRegistration.arrivalTrainName && (
+                          <p className="mb-1">
+                            <strong>Arrival Train:</strong>{" "}
+                            {formatTrainName(
+                              selectedRegistration.arrivalTrainName,
+                              selectedRegistration.arrivalTrainNameOther,
+                            )}
+                          </p>
+                        )}
+                      {selectedRegistration.departureTravelMode === "Train" &&
+                        selectedRegistration.departureTrainName && (
+                          <p className="mb-1">
+                            <strong>Departure Train:</strong>{" "}
+                            {formatTrainName(
+                              selectedRegistration.departureTrainName,
+                              selectedRegistration.departureTrainNameOther,
+                            )}
+                          </p>
+                        )}
                       <p className="mb-1">
                         <strong>Barcode ID:</strong>
                         <span className="font-monospace ms-1">
