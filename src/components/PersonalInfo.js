@@ -200,7 +200,7 @@ const PersonalInfo = ({
             type="submit"
             className="btn btn-primary primary-custom-btn"
           >
-            Next
+            Next / आगे जाये
           </button>
         </div>
       </form>

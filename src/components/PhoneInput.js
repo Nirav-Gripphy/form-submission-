@@ -59,7 +59,7 @@ const PhoneInput = ({
               <span className="ms-2">Loading</span>
             </span>
           ) : (
-            "Next"
+            "Next / आगे जाये"
           )}
         </button>
       </form>

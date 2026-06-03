@@ -263,7 +263,7 @@ const ArrivalInfo = ({ userData, nextStep, prevStep, loading }) => {
             onClick={prevStep}
             disabled={loading}
           >
-            Previous
+            Back / पीछे जाये
           </button>
           <button
             type="submit"
@@ -280,7 +280,7 @@ const ArrivalInfo = ({ userData, nextStep, prevStep, loading }) => {
                 Uploading...
               </>
             ) : (
-              "Next"
+              "Next / आगे जाये"
             )}
           </button>
         </div>

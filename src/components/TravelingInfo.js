@@ -338,10 +338,10 @@ const TravelingInfo = ({ userData, updateUserData, nextStep, prevStep }) => {
             className="btn btn-secondary secondry-cutom-btn"
             onClick={prevStep}
           >
-            Previous
+            Back / पीछे जाये
           </button>
           <button type="submit" className="btn btn-primary primary-custom-btn">
-            Next
+            Next / आगे जाये
           </button>
         </div>
       </form>

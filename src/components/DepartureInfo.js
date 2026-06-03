@@ -309,7 +309,7 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
             onClick={prevStep}
             disabled={loading}
           >
-            Previous
+            Back / पीछे जाये
           </button>
           <button
             type="submit"
@@ -326,7 +326,7 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
                 Uploading...
               </>
             ) : (
-              "Next"
+              "Next / आगे जाये"
             )}
           </button>
         </div>

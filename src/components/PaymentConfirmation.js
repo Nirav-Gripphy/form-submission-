@@ -585,7 +585,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           onClick={prevStep}
           disabled={processing}
         >
-          Previous
+          Back / पीछे जाये
         </button>
         <button
           type="button"

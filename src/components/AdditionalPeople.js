@@ -225,7 +225,7 @@ const AdditionalPeople = ({ userData, nextStep, prevStep, loading }) => {
             onClick={prevStep}
             disabled={loading}
           >
-            Previous
+            Back / पीछे जाये
           </button>
           <button
             type="submit"
