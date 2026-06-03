@@ -98,15 +98,19 @@ const TicketPreviewModal = ({ preview, onClose }) => {
     >
       <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable tpm-dialog">
         <div className="modal-content tpm-content">
-
           {/* ── Header ── */}
           <div className="tpm-header">
             <div className="tpm-header-left">
               <div className="tpm-type-badge">
-                {isPdf
-                  ? <><i className="bi bi-file-earmark-pdf" /> PDF</>
-                  : <><i className="bi bi-image" /> Image</>
-                }
+                {isPdf ? (
+                  <>
+                    <i className="bi bi-file-earmark-pdf" /> PDF
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-image" /> Image
+                  </>
+                )}
               </div>
               <div className="tpm-header-text">
                 <h5 className="tpm-title" id="ticketPreviewModalLabel">
@@ -150,10 +154,19 @@ const TicketPreviewModal = ({ preview, onClose }) => {
                   The file may be restricted or the URL has expired.
                 </p>
                 <div className="tpm-error-actions">
-                  <a href={openUrl} target="_blank" rel="noopener noreferrer" className="tpm-btn tpm-btn--primary">
+                  <a
+                    href={openUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="tpm-btn tpm-btn--primary"
+                  >
                     <i className="bi bi-box-arrow-up-right" /> Open in new tab
                   </a>
-                  <a href={openUrl} download={displayName} className="tpm-btn tpm-btn--ghost">
+                  <a
+                    href={openUrl}
+                    download={displayName}
+                    className="tpm-btn tpm-btn--ghost"
+                  >
                     <i className="bi bi-download" /> Download
                   </a>
                 </div>
@@ -186,7 +199,9 @@ const TicketPreviewModal = ({ preview, onClose }) => {
                   style={{ transform: `scale(${zoom})` }}
                   onLoad={handleImgLoad}
                   onError={handleImgError}
-                  onClick={() => setZoomIndex((i) => (i + 1) % ZOOM_LEVELS.length)}
+                  onClick={() =>
+                    setZoomIndex((i) => (i + 1) % ZOOM_LEVELS.length)
+                  }
                   title={zoom > 1 ? "Click to zoom out" : "Click to zoom in"}
                   draggable={false}
                 />
@@ -209,7 +224,9 @@ const TicketPreviewModal = ({ preview, onClose }) => {
               <span className="tpm-zoom-pct">{Math.round(zoom * 100)}%</span>
               <button
                 className="tpm-tool-btn"
-                onClick={() => setZoomIndex((i) => Math.min(ZOOM_LEVELS.length - 1, i + 1))}
+                onClick={() =>
+                  setZoomIndex((i) => Math.min(ZOOM_LEVELS.length - 1, i + 1))
+                }
                 disabled={zoomIndex === ZOOM_LEVELS.length - 1}
                 aria-label="Zoom in"
                 title="Zoom in"
@@ -229,25 +246,39 @@ const TicketPreviewModal = ({ preview, onClose }) => {
           )}
 
           {/* ── Footer ── */}
-          {preview && !loadError && (
+          {/* {preview && !loadError && (
             <div className="tpm-footer">
               <span className="tpm-footer-hint">
-                {isPdf ? "Use browser toolbar · or open in a new tab" : "Click image to zoom"}
+                {isPdf
+                  ? "Use browser toolbar · or open in a new tab"
+                  : "Click image to zoom"}
               </span>
               <div className="tpm-footer-actions">
-                <a href={openUrl} download={displayName} className="tpm-btn tpm-btn--ghost">
+                <a
+                  href={openUrl}
+                  download={displayName}
+                  className="tpm-btn tpm-btn--ghost"
+                >
                   <i className="bi bi-download" /> Download
                 </a>
-                <a href={openUrl} target="_blank" rel="noopener noreferrer" className="tpm-btn tpm-btn--primary">
+                <a
+                  href={openUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tpm-btn tpm-btn--primary"
+                >
                   <i className="bi bi-box-arrow-up-right" /> Open
                 </a>
-                <button type="button" className="tpm-btn tpm-btn--muted" onClick={handleClose}>
+                <button
+                  type="button"
+                  className="tpm-btn tpm-btn--muted"
+                  onClick={handleClose}
+                >
                   Close
                 </button>
               </div>
             </div>
-          )}
-
+          )} */}
         </div>
       </div>
 
@@ -256,15 +287,15 @@ const TicketPreviewModal = ({ preview, onClose }) => {
         #ticketPreviewModal { z-index: 1065; }
 
         .tpm-dialog {
-          max-width: min(900px, 95vw);
+          max-width: min(860px, 95vw);
         }
 
         .tpm-content {
           border: none;
-          border-radius: 16px;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
-          background: #16181d;
+          box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+          background: #fff;
         }
 
         /* Header */
@@ -274,48 +305,50 @@ const TicketPreviewModal = ({ preview, onClose }) => {
           justify-content: space-between;
           gap: 12px;
           padding: 16px 20px;
-          background: linear-gradient(135deg, #1a2332 0%, #1e2d45 100%);
-          border-bottom: 1px solid rgba(255,255,255,0.07);
+          background: #fff;
+          border-bottom: 1px solid #f0f0f0;
         }
 
         .tpm-header-left {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
           min-width: 0;
         }
 
         .tpm-type-badge {
           display: flex;
           align-items: center;
-          gap: 5px;
-          padding: 4px 10px;
-          border-radius: 20px;
-          font-size: 0.7rem;
+          gap: 4px;
+          padding: 3px 8px;
+          border-radius: 4px;
+          font-size: 0.65rem;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.07em;
           white-space: nowrap;
-          background: rgba(99, 179, 237, 0.15);
-          color: #63b3ed;
-          border: 1px solid rgba(99, 179, 237, 0.25);
+          background: #f4f4f5;
+          color: #71717a;
+          border: 1px solid #e4e4e7;
+          flex-shrink: 0;
         }
 
-        .tpm-type-badge .bi-file-earmark-pdf { color: #fc8181; }
-        .tpm-type-badge .bi { font-size: 0.75rem; }
+        .tpm-type-badge .bi-file-earmark-pdf { color: #ef4444; }
+        .tpm-type-badge .bi-image { color: #3b82f6; }
+        .tpm-type-badge .bi { font-size: 0.7rem; }
 
         .tpm-header-text {
           min-width: 0;
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 1px;
         }
 
         .tpm-title {
           margin: 0;
-          font-size: 1rem;
+          font-size: 0.95rem;
           font-weight: 600;
-          color: #e2e8f0;
+          color: #18181b;
           line-height: 1.3;
           white-space: nowrap;
           overflow: hidden;
@@ -323,37 +356,37 @@ const TicketPreviewModal = ({ preview, onClose }) => {
         }
 
         .tpm-filename {
-          font-size: 0.72rem;
-          color: #718096;
+          font-size: 0.7rem;
+          color: #a1a1aa;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 300px;
+          max-width: 320px;
         }
 
         .tpm-close {
           flex-shrink: 0;
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 8px;
-          color: #a0aec0;
+          background: transparent;
+          border: none;
+          border-radius: 6px;
+          color: #a1a1aa;
           cursor: pointer;
-          transition: all 0.15s;
-          font-size: 0.9rem;
+          transition: all 0.12s;
+          font-size: 0.85rem;
         }
-        .tpm-close:hover { background: rgba(255,255,255,0.12); color: #e2e8f0; }
+        .tpm-close:hover { background: #f4f4f5; color: #18181b; }
 
         /* Body */
         .tpm-body {
           position: relative;
-          min-height: 340px;
-          max-height: calc(100vh - 240px);
-          background: #0f1117;
+          min-height: 320px;
+          max-height: calc(100vh - 220px);
+          background: #fafafa;
           overflow: hidden;
           display: flex;
           align-items: stretch;
@@ -367,20 +400,20 @@ const TicketPreviewModal = ({ preview, onClose }) => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 14px;
-          background: #0f1117;
-          color: #718096;
-          font-size: 0.875rem;
+          gap: 12px;
+          background: #fafafa;
+          color: #a1a1aa;
+          font-size: 0.82rem;
           z-index: 3;
         }
 
         .tpm-spinner {
-          width: 36px;
-          height: 36px;
-          border: 3px solid rgba(99,179,237,0.15);
-          border-top-color: #63b3ed;
+          width: 28px;
+          height: 28px;
+          border: 2px solid #e4e4e7;
+          border-top-color: #3b82f6;
           border-radius: 50%;
-          animation: tpmSpin 0.7s linear infinite;
+          animation: tpmSpin 0.65s linear infinite;
         }
 
         @keyframes tpmSpin { to { transform: rotate(360deg); } }
@@ -397,36 +430,36 @@ const TicketPreviewModal = ({ preview, onClose }) => {
         }
 
         .tpm-error-icon {
-          width: 64px;
-          height: 64px;
+          width: 52px;
+          height: 52px;
           border-radius: 50%;
-          background: rgba(252,129,129,0.1);
-          border: 1px solid rgba(252,129,129,0.2);
+          background: #fef2f2;
+          border: 1px solid #fecaca;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.75rem;
-          color: #fc8181;
-          margin-bottom: 16px;
+          font-size: 1.4rem;
+          color: #ef4444;
+          margin-bottom: 14px;
         }
 
         .tpm-error-title {
-          font-size: 1rem;
+          font-size: 0.95rem;
           font-weight: 600;
-          color: #e2e8f0;
-          margin: 0 0 8px;
+          color: #18181b;
+          margin: 0 0 6px;
         }
 
         .tpm-error-sub {
-          font-size: 0.8rem;
-          color: #718096;
-          margin: 0 0 20px;
+          font-size: 0.78rem;
+          color: #a1a1aa;
+          margin: 0 0 18px;
           max-width: 280px;
         }
 
         .tpm-error-actions {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           flex-wrap: wrap;
           justify-content: center;
         }
@@ -443,14 +476,14 @@ const TicketPreviewModal = ({ preview, onClose }) => {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 10px 16px;
-          background: #1a1f2e;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
-          font-size: 0.82rem;
-          color: #a0aec0;
+          padding: 8px 16px;
+          background: #fff;
+          border-bottom: 1px solid #f0f0f0;
+          font-size: 0.78rem;
+          color: #71717a;
         }
 
-        .tpm-pdf-icon { color: #fc8181; font-size: 1.1rem; }
+        .tpm-pdf-icon { color: #ef4444; font-size: 1rem; }
 
         .tpm-pdf-name {
           white-space: nowrap;
@@ -472,23 +505,24 @@ const TicketPreviewModal = ({ preview, onClose }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 24px;
+          padding: 20px;
           overflow: auto;
-          min-height: 340px;
+          min-height: 320px;
           opacity: 0;
-          transition: opacity 0.25s ease;
+          transition: opacity 0.2s ease;
+          background: #fafafa;
         }
 
         .tpm-img-wrap.is-loaded { opacity: 1; }
 
         .tpm-img {
           max-width: 100%;
-          max-height: calc(100vh - 300px);
+          max-height: calc(100vh - 280px);
           object-fit: contain;
-          border-radius: 6px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+          border-radius: 4px;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.1);
           transform-origin: center;
-          transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+          transition: transform 0.18s ease;
           cursor: zoom-in;
           user-select: none;
         }
@@ -498,49 +532,50 @@ const TicketPreviewModal = ({ preview, onClose }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          padding: 10px 16px;
-          background: #1a1f2e;
-          border-top: 1px solid rgba(255,255,255,0.07);
+          gap: 4px;
+          padding: 8px 16px;
+          background: #fff;
+          border-top: 1px solid #f0f0f0;
         }
 
         .tpm-tool-btn {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 7px;
-          color: #a0aec0;
+          width: 30px;
+          height: 30px;
+          background: transparent;
+          border: 1px solid #e4e4e7;
+          border-radius: 6px;
+          color: #71717a;
           cursor: pointer;
-          transition: all 0.15s;
-          font-size: 0.85rem;
+          transition: all 0.12s;
+          font-size: 0.82rem;
         }
 
         .tpm-tool-btn:hover:not(:disabled) {
-          background: rgba(255,255,255,0.1);
-          color: #e2e8f0;
+          background: #f4f4f5;
+          color: #18181b;
+          border-color: #d4d4d8;
         }
 
-        .tpm-tool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .tpm-tool-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .tpm-tool-btn:not(.bi) { width: auto; padding: 0 10px; font-size: 0.75rem; font-weight: 600; }
+        .tpm-tool-btn:not(.bi) { width: auto; padding: 0 10px; font-size: 0.72rem; font-weight: 600; }
 
         .tpm-zoom-pct {
-          font-size: 0.78rem;
+          font-size: 0.75rem;
           font-weight: 600;
-          color: #63b3ed;
-          min-width: 44px;
+          color: #3b82f6;
+          min-width: 40px;
           text-align: center;
           font-variant-numeric: tabular-nums;
         }
 
         .tpm-tool-divider {
           width: 1px;
-          height: 20px;
-          background: rgba(255,255,255,0.1);
+          height: 18px;
+          background: #e4e4e7;
           margin: 0 4px;
         }
 
@@ -550,20 +585,20 @@ const TicketPreviewModal = ({ preview, onClose }) => {
           align-items: center;
           justify-content: space-between;
           flex-wrap: wrap;
-          gap: 10px;
-          padding: 12px 20px;
-          background: #16181d;
-          border-top: 1px solid rgba(255,255,255,0.07);
+          gap: 8px;
+          padding: 10px 16px;
+          background: #fff;
+          border-top: 1px solid #f0f0f0;
         }
 
         .tpm-footer-hint {
-          font-size: 0.75rem;
-          color: #4a5568;
+          font-size: 0.72rem;
+          color: #a1a1aa;
         }
 
         .tpm-footer-actions {
           display: flex;
-          gap: 8px;
+          gap: 6px;
           flex-wrap: wrap;
           margin-left: auto;
         }
@@ -572,37 +607,38 @@ const TicketPreviewModal = ({ preview, onClose }) => {
         .tpm-btn {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          padding: 7px 14px;
-          border-radius: 8px;
-          font-size: 0.8rem;
+          gap: 5px;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 0.78rem;
           font-weight: 500;
           text-decoration: none;
           cursor: pointer;
-          border: none;
-          transition: all 0.15s;
+          transition: all 0.12s;
           white-space: nowrap;
+          border: 1px solid transparent;
         }
 
         .tpm-btn--primary {
-          background: #2b6cb0;
+          background: #18181b;
           color: #fff;
+          border-color: #18181b;
         }
-        .tpm-btn--primary:hover { background: #2c5282; color: #fff; }
+        .tpm-btn--primary:hover { background: #27272a; color: #fff; }
 
         .tpm-btn--ghost {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.12);
-          color: #a0aec0;
+          background: #fff;
+          border-color: #e4e4e7;
+          color: #52525b;
         }
-        .tpm-btn--ghost:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+        .tpm-btn--ghost:hover { background: #f4f4f5; color: #18181b; border-color: #d4d4d8; }
 
         .tpm-btn--muted {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          color: #718096;
+          background: #f4f4f5;
+          border-color: #f4f4f5;
+          color: #71717a;
         }
-        .tpm-btn--muted:hover { background: rgba(255,255,255,0.08); color: #a0aec0; }
+        .tpm-btn--muted:hover { background: #e4e4e7; color: #3f3f46; }
 
         /* Responsive */
         @media (max-width: 576px) {
@@ -660,12 +696,18 @@ const DetailsModal = ({ selectedRegistration }) => {
 
   const openTicketPreview = (url, title, fileName) => {
     if (!url) return;
-    setTicketPreview({ url, title, isPdf: isPdfTicket(url, fileName), fileName: fileName || "" });
+    setTicketPreview({
+      url,
+      title,
+      isPdf: isPdfTicket(url, fileName),
+      fileName: fileName || "",
+    });
   };
 
   const formatTrainName = (trainName, trainNameOther) => {
     if (!trainName) return "";
-    if (trainName === "Others / अन्य" && trainNameOther) return `${trainName} (${trainNameOther})`;
+    if (trainName === "Others / अन्य" && trainNameOther)
+      return `${trainName} (${trainNameOther})`;
     return trainName;
   };
 
@@ -723,8 +765,14 @@ const DetailsModal = ({ selectedRegistration }) => {
                       <div className="ms-3">
                         <h5 className="mb-1">{selectedRegistration.name}</h5>
                         <p className="text-muted mb-0">
-                          <i className="bi bi-telephone me-1" aria-hidden="true" />
-                          <a href={`tel:${selectedRegistration.phoneNumber}`} className="text-decoration-none">
+                          <i
+                            className="bi bi-telephone me-1"
+                            aria-hidden="true"
+                          />
+                          <a
+                            href={`tel:${selectedRegistration.phoneNumber}`}
+                            className="text-decoration-none"
+                          >
                             {selectedRegistration.phoneNumber}
                           </a>
                         </p>
@@ -741,7 +789,9 @@ const DetailsModal = ({ selectedRegistration }) => {
                             size={50}
                           />
                           <div className="ms-3">
-                            <p className="fw-medium mb-1">{selectedRegistration.husbandName}</p>
+                            <p className="fw-medium mb-1">
+                              {selectedRegistration.husbandName}
+                            </p>
                             <small className="text-muted font-monospace">
                               ID: {selectedRegistration.spouseBarcodeId}
                             </small>
@@ -752,27 +802,39 @@ const DetailsModal = ({ selectedRegistration }) => {
 
                     <div className="border-top pt-3">
                       <h6 className="mb-3">
-                        Additional People ({selectedRegistration.additionalPeople?.length || 0}):
+                        Additional People (
+                        {selectedRegistration.additionalPeople?.length || 0}):
                       </h6>
                       {selectedRegistration.additionalPeople?.length > 0 ? (
                         <div className="row g-2">
-                          {selectedRegistration.additionalPeople.map((person, index) => (
-                            <div key={person.id || index} className="col-12">
-                              <div className="card card-body py-2">
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <div className="fw-medium">{person.name}</div>
-                                    <small className="text-muted">{person.relation}</small>
+                          {selectedRegistration.additionalPeople.map(
+                            (person, index) => (
+                              <div key={person.id || index} className="col-12">
+                                <div className="card card-body py-2">
+                                  <div className="d-flex justify-content-between align-items-center">
+                                    <div>
+                                      <div className="fw-medium">
+                                        {person.name}
+                                      </div>
+                                      <small className="text-muted">
+                                        {person.relation}
+                                      </small>
+                                    </div>
+                                    <span className="badge bg-secondary">
+                                      #{index + 1}
+                                    </span>
                                   </div>
-                                  <span className="badge bg-secondary">#{index + 1}</span>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            ),
+                          )}
                         </div>
                       ) : (
                         <div className="text-center py-3 text-muted">
-                          <i className="bi bi-people display-6" aria-hidden="true" />
+                          <i
+                            className="bi bi-people display-6"
+                            aria-hidden="true"
+                          />
                           <p className="mt-2 mb-0">No additional people</p>
                         </div>
                       )}
@@ -787,7 +849,8 @@ const DetailsModal = ({ selectedRegistration }) => {
                         Address:
                       </h6>
                       <address className="mb-0">
-                        {selectedRegistration.city}, {selectedRegistration.state}
+                        {selectedRegistration.city},{" "}
+                        {selectedRegistration.state}
                       </address>
                     </div>
 
@@ -799,16 +862,30 @@ const DetailsModal = ({ selectedRegistration }) => {
                       <div className="small">
                         <div className="row g-2">
                           <div className="col-6">
-                            <strong>Arrival:</strong><br />
-                            {formatDate(selectedRegistration.arrivalDate)}<br />
-                            <small className="text-muted">{selectedRegistration.arrivalTime}</small><br />
-                            <small className="text-muted">via {selectedRegistration.arrivalTravelMode}</small>
+                            <strong>Arrival:</strong>
+                            <br />
+                            {formatDate(selectedRegistration.arrivalDate)}
+                            <br />
+                            <small className="text-muted">
+                              {selectedRegistration.arrivalTime}
+                            </small>
+                            <br />
+                            <small className="text-muted">
+                              via {selectedRegistration.arrivalTravelMode}
+                            </small>
                           </div>
                           <div className="col-6">
-                            <strong>Departure:</strong><br />
-                            {formatDate(selectedRegistration.departureDate)}<br />
-                            <small className="text-muted">{selectedRegistration.departureTime}</small><br />
-                            <small className="text-muted">via {selectedRegistration.departureTravelMode}</small>
+                            <strong>Departure:</strong>
+                            <br />
+                            {formatDate(selectedRegistration.departureDate)}
+                            <br />
+                            <small className="text-muted">
+                              {selectedRegistration.departureTime}
+                            </small>
+                            <br />
+                            <small className="text-muted">
+                              via {selectedRegistration.departureTravelMode}
+                            </small>
                           </div>
                         </div>
                       </div>
@@ -818,7 +895,10 @@ const DetailsModal = ({ selectedRegistration }) => {
                     {ticketItems.length > 0 && (
                       <div className="mb-4">
                         <h6 className="mb-2">
-                          <i className="bi bi-ticket-perforated me-1" aria-hidden="true" />
+                          <i
+                            className="bi bi-ticket-perforated me-1"
+                            aria-hidden="true"
+                          />
                           Uploaded Tickets:
                         </h6>
                         <div className="d-flex flex-column gap-1">
@@ -828,7 +908,13 @@ const DetailsModal = ({ selectedRegistration }) => {
                               type="button"
                               className="btn btn-link btn-sm p-0 text-start text-decoration-none d-flex align-items-center gap-2"
                               style={{ width: "fit-content" }}
-                              onClick={() => openTicketPreview(ticket.url, ticket.label, ticket.fileName)}
+                              onClick={() =>
+                                openTicketPreview(
+                                  ticket.url,
+                                  ticket.label,
+                                  ticket.fileName,
+                                )
+                              }
                               aria-label={`Preview ${ticket.label}`}
                             >
                               <i
@@ -839,7 +925,10 @@ const DetailsModal = ({ selectedRegistration }) => {
                                 }`}
                               />
                               <span>{ticket.label}</span>
-                              <i className="bi bi-eye text-muted" style={{ fontSize: "0.75rem" }} />
+                              <i
+                                className="bi bi-eye text-muted"
+                                style={{ fontSize: "0.75rem" }}
+                              />
                             </button>
                           ))}
                         </div>
@@ -872,14 +961,19 @@ const DetailsModal = ({ selectedRegistration }) => {
                           )}
                         <p className="mb-1">
                           <strong>Barcode ID:</strong>
-                          <span className="font-monospace ms-1">{selectedRegistration.primaryBarcodeId}</span>
+                          <span className="font-monospace ms-1">
+                            {selectedRegistration.primaryBarcodeId}
+                          </span>
                         </p>
                         <p className="mb-1">
-                          <strong>Total Attendees:</strong> {selectedRegistration.attendeeCount}
+                          <strong>Total Attendees:</strong>{" "}
+                          {selectedRegistration.attendeeCount}
                         </p>
                         <p className="mb-0">
                           <strong>Registration Date:</strong>{" "}
-                          {formatDateTime(selectedRegistration.registrationDate)}
+                          {formatDateTime(
+                            selectedRegistration.registrationDate,
+                          )}
                         </p>
                       </div>
                     </div>
@@ -891,7 +985,10 @@ const DetailsModal = ({ selectedRegistration }) => {
         </div>
       </div>
 
-      <TicketPreviewModal preview={ticketPreview} onClose={closeTicketPreview} />
+      <TicketPreviewModal
+        preview={ticketPreview}
+        onClose={closeTicketPreview}
+      />
     </>
   );
 };
