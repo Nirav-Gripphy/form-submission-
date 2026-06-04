@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const PersonalInfo = ({
-  userData,
-  updateUserData,
-  nextStep,
-}) => {
+const PersonalInfo = ({ userData, updateUserData, nextStep }) => {
   const [localData, setLocalData] = useState({
     name: "",
     city: "",
@@ -186,7 +182,6 @@ const PersonalInfo = ({
                 <div className="invalid-feedback">{errors.husbandName}</div>
               )}
             </div>
-
           </>
         )}
 
@@ -196,11 +191,8 @@ const PersonalInfo = ({
             justifyContent: "flex-end",
           }}
         >
-          <button
-            type="submit"
-            className="btn btn-primary primary-custom-btn"
-          >
-            Next / आगे जाये
+          <button type="submit" className="btn btn-primary primary-custom-btn">
+            Next / आगे जाएं
           </button>
         </div>
       </form>

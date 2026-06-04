@@ -143,7 +143,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         registrationsRef,
         where("primaryBarcodeId", ">=", "B-"), // Look for barcodes starting with B-
         orderBy("primaryBarcodeId", "desc"), // Order by barcode ID in descending order
-        limit(1) // Get only the latest one
+        limit(1), // Get only the latest one
       );
 
       const querySnapshot = await getDocs(q);
@@ -242,7 +242,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         // console.log("Creating new registration");
         const registrationRef = await addDoc(
           collection(db, "registration-2026"),
-          registrationData
+          registrationData,
         );
         regId = registrationRef.id;
         // Store the registration ID in state for potential retries
@@ -273,7 +273,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           paymentId: paymentDetails.razorpayPaymentId,
           orderId: paymentDetails.razorpayOrderId,
         },
-        barcodeData
+        barcodeData,
       );
 
       setPaymentId(paymentDetails.razorpayPaymentId);
@@ -307,7 +307,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       console.error("Error processing successful payment:", error);
       setPaymentFailed(true);
       setError(
-        "भुगतान सफल हुआ, लेकिन पंजीकरण की प्रक्रिया में त्रुटि हुई। कृपया संपर्क करें।"
+        "भुगतान सफल हुआ, लेकिन पंजीकरण की प्रक्रिया में त्रुटि हुई। कृपया संपर्क करें।",
       );
     } finally {
       setProcessing(false);
@@ -320,7 +320,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     setPaymentSuccess(false);
 
     setError(
-      `भुगतान असफल: ${error.description || error.message || "अज्ञात त्रुटि"}`
+      `भुगतान असफल: ${error.description || error.message || "अज्ञात त्रुटि"}`,
     );
   };
 
@@ -329,7 +329,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     setError("");
 
     const res = await loadScript(
-      "https://checkout.razorpay.com/v1/checkout.js"
+      "https://checkout.razorpay.com/v1/checkout.js",
     );
 
     if (!res) {
@@ -348,7 +348,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           amount: amount,
           currency: "INR",
           // env: "dev", // fpr local only
-        }
+        },
       );
 
       if (response?.data) {
@@ -585,7 +585,7 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           onClick={prevStep}
           disabled={processing}
         >
-          Back / पीछे जाये
+          Back / पीछे जाएं
         </button>
         <button
           type="button"

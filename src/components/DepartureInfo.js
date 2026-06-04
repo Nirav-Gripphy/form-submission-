@@ -52,7 +52,8 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
   const [errors, setErrors] = useState({});
   const [minDepartureTime, setMinDepartureTime] = useState("");
   const [departureTicketFile, setDepartureTicketFile] = useState(null);
-  const [isDepartureTicketDragging, setIsDepartureTicketDragging] = useState(false);
+  const [isDepartureTicketDragging, setIsDepartureTicketDragging] =
+    useState(false);
   const [departureTicketPreview, setDepartureTicketPreview] = useState(
     existingDepartureTicketURL || null,
   );
@@ -81,38 +82,56 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
       userData.arrivalTime
     ) {
       setMinDepartureTime(userData.arrivalTime);
-      if (localData.departureTime && localData.departureTime <= userData.arrivalTime) {
+      if (
+        localData.departureTime &&
+        localData.departureTime <= userData.arrivalTime
+      ) {
         setLocalData((prev) => ({ ...prev, departureTime: "" }));
       }
     } else {
       setMinDepartureTime("");
     }
-  }, [userData.arrivalDate, userData.arrivalTime, localData.departureDate, localData.departureTime]);
+  }, [
+    userData.arrivalDate,
+    userData.arrivalTime,
+    localData.departureDate,
+    localData.departureTime,
+  ]);
 
   const validateForm = () => {
     const newErrors = {};
-    if (!localData.departureDate) newErrors.departureDate = "प्रस्थान तिथि आवश्यक है";
-    if (!localData.departureTime) newErrors.departureTime = "प्रस्थान समय आवश्यक है";
-    if (!localData.departureTravelMode) newErrors.departureTravelMode = "प्रस्थान यात्रा का माध्यम आवश्यक है";
+    if (!localData.departureDate)
+      newErrors.departureDate = "प्रस्थान तिथि आवश्यक है";
+    if (!localData.departureTime)
+      newErrors.departureTime = "प्रस्थान समय आवश्यक है";
+    if (!localData.departureTravelMode)
+      newErrors.departureTravelMode = "प्रस्थान यात्रा का माध्यम आवश्यक है";
 
     if (userData.arrivalDate && localData.departureDate) {
       if (localData.departureDate < userData.arrivalDate) {
-        newErrors.departureDate = "प्रस्थान तिथि आगमन तिथि से पहले नहीं हो सकती";
+        newErrors.departureDate =
+          "प्रस्थान तिथि आगमन तिथि से पहले नहीं हो सकती";
       } else if (
         localData.departureDate === userData.arrivalDate &&
         userData.arrivalTime &&
         localData.departureTime &&
         localData.departureTime <= userData.arrivalTime
       ) {
-        newErrors.departureTime = "एक ही दिन पर, प्रस्थान समय आगमन समय के बाद होना चाहिए";
+        newErrors.departureTime =
+          "एक ही दिन पर, प्रस्थान समय आगमन समय के बाद होना चाहिए";
       }
     }
 
-    const isFlightOrTrain = localData.departureTravelMode === "Flight" || localData.departureTravelMode === "Train";
+    const isFlightOrTrain =
+      localData.departureTravelMode === "Flight" ||
+      localData.departureTravelMode === "Train";
     if (isFlightOrTrain && !departureTicketFile && !departureTicketPreview) {
       newErrors.departureTicketFile = "टिकट अपलोड करना आवश्यक है";
     }
-    if (localData.departureTravelMode === "Train" && !localData.departureTrainName) {
+    if (
+      localData.departureTravelMode === "Train" &&
+      !localData.departureTrainName
+    ) {
       newErrors.departureTrainName = "ट्रेन का चयन आवश्यक है";
     }
     if (
@@ -138,7 +157,10 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
     if (loading) return;
     if (!file) return;
     if (!ALLOWED_TICKET_TYPES.includes(file.type)) {
-      setErrors((prev) => ({ ...prev, departureTicketFile: "केवल JPG, PNG या PDF फ़ाइल अपलोड करें" }));
+      setErrors((prev) => ({
+        ...prev,
+        departureTicketFile: "केवल JPG, PNG या PDF फ़ाइल अपलोड करें",
+      }));
       setDepartureTicketFile(null);
       setDepartureTicketPreview(null);
       setDepartureTicketType("");
@@ -157,7 +179,11 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
 
     const reader = new FileReader();
     reader.onloadend = () => setDepartureTicketPreview(reader.result);
-    reader.onerror = () => setErrors((prev) => ({ ...prev, departureTicketFile: "फ़ाइल पढ़ने में त्रुटि। कृपया पुनः प्रयास करें।" }));
+    reader.onerror = () =>
+      setErrors((prev) => ({
+        ...prev,
+        departureTicketFile: "फ़ाइल पढ़ने में त्रुटि। कृपया पुनः प्रयास करें।",
+      }));
     reader.readAsDataURL(file);
   };
 
@@ -183,7 +209,9 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
       hasDepartureTicket:
         requiresTicket && (!!departureTicketFile || !!departureTicketPreview),
       departureTicketFile,
-      removeDepartureTicket: requiresTicket ? removeExistingDepartureTicket : true,
+      removeDepartureTicket: requiresTicket
+        ? removeExistingDepartureTicket
+        : true,
     });
   };
 
@@ -201,76 +229,221 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
       <h3 className="form-section-title">Departure Details</h3>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="departureDate" className="isRequired">Departure Date/प्रस्थान तिथि</label>
-          <select className={`form-select ${errors.departureDate ? "is-invalid" : ""}`} id="departureDate" name="departureDate" value={localData.departureDate} onChange={handleInputChange} disabled={loading}>
+          <label htmlFor="departureDate" className="isRequired">
+            Departure Date/प्रस्थान तिथि
+          </label>
+          <select
+            className={`form-select ${errors.departureDate ? "is-invalid" : ""}`}
+            id="departureDate"
+            name="departureDate"
+            value={localData.departureDate}
+            onChange={handleInputChange}
+            disabled={loading}
+          >
             <option value={""}>प्रस्थान तिथि चुनें</option>
             <option value="2026-08-01">1 अगस्त 2026</option>
             <option value="2026-08-02">2 अगस्त 2026</option>
             <option value="2026-08-03">3 अगस्त 2026</option>
           </select>
-          {errors.departureDate && <div className="invalid-feedback">{errors.departureDate}</div>}
+          {errors.departureDate && (
+            <div className="invalid-feedback">{errors.departureDate}</div>
+          )}
         </div>
 
         <div className="form-group">
-          <label htmlFor="departureTime" className="isRequired">Departure Time/प्रस्थान समय</label>
-          <input type="time" className={`form-control ${errors.departureTime ? "is-invalid" : ""}`} id="departureTime" name="departureTime" value={localData.departureTime} onChange={handleInputChange} min={minDepartureTime} disabled={loading} />
-          {errors.departureTime && <div className="invalid-feedback">{errors.departureTime}</div>}
+          <label htmlFor="departureTime" className="isRequired">
+            Departure Time/प्रस्थान समय
+          </label>
+          <input
+            type="time"
+            className={`form-control ${errors.departureTime ? "is-invalid" : ""}`}
+            id="departureTime"
+            name="departureTime"
+            value={localData.departureTime}
+            onChange={handleInputChange}
+            min={minDepartureTime}
+            disabled={loading}
+          />
+          {errors.departureTime && (
+            <div className="invalid-feedback">{errors.departureTime}</div>
+          )}
         </div>
 
         <div className="form-group">
-          <label className="isRequired">Departure Traveling Mode/प्रस्थान यात्रा का माध्यम</label>
-          <div className={`travel-mode-options ${errors.departureTravelMode ? "is-invalid" : ""}`}>
+          <label className="isRequired">
+            Departure Traveling Mode/प्रस्थान यात्रा का माध्यम
+          </label>
+          <div
+            className={`travel-mode-options ${errors.departureTravelMode ? "is-invalid" : ""}`}
+          >
             {travelModes.map((mode) => (
               <div className="form-check form-check-inline" key={mode.value}>
-                <input type="radio" className="form-check-input" id={`Departure${mode.value}Mode`} name="departureTravelMode" value={mode.value} checked={localData.departureTravelMode === mode.value} onChange={handleInputChange} disabled={loading} />
-                <label className="form-check-label" htmlFor={`Departure${mode.value}Mode`}>{mode.label}</label>
+                <input
+                  type="radio"
+                  className="form-check-input"
+                  id={`Departure${mode.value}Mode`}
+                  name="departureTravelMode"
+                  value={mode.value}
+                  checked={localData.departureTravelMode === mode.value}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                />
+                <label
+                  className="form-check-label"
+                  htmlFor={`Departure${mode.value}Mode`}
+                >
+                  {mode.label}
+                </label>
               </div>
             ))}
           </div>
-          {errors.departureTravelMode && <div className="invalid-feedback">{errors.departureTravelMode}</div>}
+          {errors.departureTravelMode && (
+            <div className="invalid-feedback">{errors.departureTravelMode}</div>
+          )}
         </div>
 
-        {(localData.departureTravelMode === "Flight" || localData.departureTravelMode === "Train") && (
+        {(localData.departureTravelMode === "Flight" ||
+          localData.departureTravelMode === "Train") && (
           <>
             <div className="form-group">
-              <label htmlFor="departureTicket" className="isRequired">Departure Ticket Upload/प्रस्थान टिकट अपलोड (Image/PDF)</label>
+              <label htmlFor="departureTicket" className="isRequired">
+                Departure Ticket Upload/प्रस्थान टिकट अपलोड (Image/PDF)
+              </label>
               <div
                 className={`ticket-upload-container ${isDepartureTicketDragging ? "dragging" : ""} ${errors.departureTicketFile ? "error" : ""}`}
-                style={{ pointerEvents: loading ? "none" : "auto", opacity: loading ? 0.7 : 1 }}
-                onDragOver={(e) => { if (loading) return; e.preventDefault(); e.stopPropagation(); setIsDepartureTicketDragging(true); }}
-                onDragLeave={(e) => { if (loading) return; e.preventDefault(); e.stopPropagation(); setIsDepartureTicketDragging(false); }}
-                onDrop={(e) => { if (loading) return; e.preventDefault(); e.stopPropagation(); setIsDepartureTicketDragging(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) processDepartureTicketFile(e.dataTransfer.files[0]); }}
+                style={{
+                  pointerEvents: loading ? "none" : "auto",
+                  opacity: loading ? 0.7 : 1,
+                }}
+                onDragOver={(e) => {
+                  if (loading) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDepartureTicketDragging(true);
+                }}
+                onDragLeave={(e) => {
+                  if (loading) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDepartureTicketDragging(false);
+                }}
+                onDrop={(e) => {
+                  if (loading) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDepartureTicketDragging(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files[0])
+                    processDepartureTicketFile(e.dataTransfer.files[0]);
+                }}
               >
                 {!departureTicketPreview ? (
                   <div className="upload-placeholder">
-                    <div className="upload-icon"><i className="bi bi-upload fs-1"></i></div>
-                    <p className="upload-text">प्रस्थान टिकट अपलोड करने के लिए क्लिक करें या यहां खींचें</p>
-                    <p className="upload-requirements">केवल JPG, PNG या PDF फाइलें</p>
-                    <input type="file" className="file-input" id="departureTicket" accept="image/jpeg,image/jpg,image/png,application/pdf,.pdf" onChange={(e) => processDepartureTicketFile(e.target.files?.[0])} disabled={loading} />
+                    <div className="upload-icon">
+                      <i className="bi bi-upload fs-1"></i>
+                    </div>
+                    <p className="upload-text">
+                      प्रस्थान टिकट अपलोड करने के लिए क्लिक करें या यहां खींचें
+                    </p>
+                    <p className="upload-requirements">
+                      केवल JPG, PNG या PDF फाइलें
+                    </p>
+                    <input
+                      type="file"
+                      className="file-input"
+                      id="departureTicket"
+                      accept="image/jpeg,image/jpg,image/png,application/pdf,.pdf"
+                      onChange={(e) =>
+                        processDepartureTicketFile(e.target.files?.[0])
+                      }
+                      disabled={loading}
+                    />
                   </div>
                 ) : (
                   <div className="preview-container">
                     {departureTicketType === "application/pdf" ? (
-                      <div className="pdf-preview"><i className="bi bi-file-earmark-pdf fs-1 text-danger"></i><div className="fw-medium">PDF Ticket Selected</div></div>
+                      <div className="pdf-preview">
+                        <i className="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+                        <div className="fw-medium">PDF Ticket Selected</div>
+                      </div>
                     ) : (
-                      <img src={departureTicketPreview} alt="Departure Ticket Preview" className="image-preview" />
+                      <img
+                        src={departureTicketPreview}
+                        alt="Departure Ticket Preview"
+                        className="image-preview"
+                      />
                     )}
-                    {departureTicketFile && <div className="file-info">फ़ाइल: {departureTicketFile.name}</div>}
+                    {departureTicketFile && (
+                      <div className="file-info">
+                        फ़ाइल: {departureTicketFile.name}
+                      </div>
+                    )}
                     <div className="preview-actions">
-                      <button type="button" className="change-photo-btn" onClick={() => document.getElementById("departureTicket").click()} disabled={loading}><i className="bi bi-pencil-square" style={{ width: "16px" }} />बदलें</button>
-                      <button type="button" className="remove-photo-btn" onClick={() => { setDepartureTicketFile(null); setDepartureTicketPreview(null); setDepartureTicketType(""); setRemoveExistingDepartureTicket(true); setErrors((prev) => ({ ...prev, departureTicketFile: null })); }} disabled={loading}><i className="bi bi-trash" style={{ width: "16px" }} />हटाएं</button>
+                      <button
+                        type="button"
+                        className="change-photo-btn"
+                        onClick={() =>
+                          document.getElementById("departureTicket").click()
+                        }
+                        disabled={loading}
+                      >
+                        <i
+                          className="bi bi-pencil-square"
+                          style={{ width: "16px" }}
+                        />
+                        बदलें
+                      </button>
+                      <button
+                        type="button"
+                        className="remove-photo-btn"
+                        onClick={() => {
+                          setDepartureTicketFile(null);
+                          setDepartureTicketPreview(null);
+                          setDepartureTicketType("");
+                          setRemoveExistingDepartureTicket(true);
+                          setErrors((prev) => ({
+                            ...prev,
+                            departureTicketFile: null,
+                          }));
+                        }}
+                        disabled={loading}
+                      >
+                        <i className="bi bi-trash" style={{ width: "16px" }} />
+                        हटाएं
+                      </button>
                     </div>
-                    <input type="file" className="file-input hidden" id="departureTicket" accept="image/jpeg,image/jpg,image/png,application/pdf,.pdf" onChange={(e) => processDepartureTicketFile(e.target.files?.[0])} disabled={loading} />
+                    <input
+                      type="file"
+                      className="file-input hidden"
+                      id="departureTicket"
+                      accept="image/jpeg,image/jpg,image/png,application/pdf,.pdf"
+                      onChange={(e) =>
+                        processDepartureTicketFile(e.target.files?.[0])
+                      }
+                      disabled={loading}
+                    />
                   </div>
                 )}
               </div>
-              {errors.departureTicketFile && <div className="error-message text-start">{errors.departureTicketFile}</div>}
+              {errors.departureTicketFile && (
+                <div className="error-message text-start">
+                  {errors.departureTicketFile}
+                </div>
+              )}
             </div>
 
             {isTrainMode && (
               <div className="form-group">
-                <label htmlFor="departureTrainName" className="isRequired">Departure Train Name/प्रस्थान ट्रेन का नाम</label>
-                <select className={`form-select ${errors.departureTrainName ? "is-invalid" : ""}`} id="departureTrainName" name="departureTrainName" value={localData.departureTrainName} onChange={handleInputChange} disabled={loading}>
+                <label htmlFor="departureTrainName" className="isRequired">
+                  Departure Train Name/प्रस्थान ट्रेन का नाम
+                </label>
+                <select
+                  className={`form-select ${errors.departureTrainName ? "is-invalid" : ""}`}
+                  id="departureTrainName"
+                  name="departureTrainName"
+                  value={localData.departureTrainName}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                >
                   <option value={""}>ट्रेन चुनें</option>
                   {predefinedDepartureTrains.map((train) => (
                     <option key={train} value={train}>
@@ -296,7 +469,11 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
                     disabled={loading}
                   />
                 )}
-                {errors.departureTrainName && <div className="invalid-feedback">{errors.departureTrainName}</div>}
+                {errors.departureTrainName && (
+                  <div className="invalid-feedback">
+                    {errors.departureTrainName}
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -309,7 +486,7 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
             onClick={prevStep}
             disabled={loading}
           >
-            Back / पीछे जाये
+            Back / पीछे जाएं
           </button>
           <button
             type="submit"
@@ -326,7 +503,7 @@ const DepartureInfo = ({ userData, nextStep, prevStep, loading }) => {
                 Uploading...
               </>
             ) : (
-              "Next / आगे जाये"
+              "Next / आगे जाएं"
             )}
           </button>
         </div>

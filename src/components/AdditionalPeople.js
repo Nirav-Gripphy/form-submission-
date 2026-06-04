@@ -69,7 +69,7 @@ const AdditionalPeople = ({ userData, nextStep, prevStep, loading }) => {
     if (loading) return;
     setLocalData((prev) => ({
       additionalPeople: prev.additionalPeople.filter(
-        (person) => person.id !== id
+        (person) => person.id !== id,
       ),
     }));
   };
@@ -225,7 +225,7 @@ const AdditionalPeople = ({ userData, nextStep, prevStep, loading }) => {
             onClick={prevStep}
             disabled={loading}
           >
-            Back / पीछे जाये
+            Back / पीछे जाएं
           </button>
           <button
             type="submit"
