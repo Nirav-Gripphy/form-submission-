@@ -1,18 +1,149 @@
 import { useEffect, useRef, useState } from "react";
-import { useReactToPrint } from "react-to-print";
-
-import JsBarcode from "jsbarcode"; // Import JsBarcode library
+import JsBarcode from "jsbarcode";
 import UserPassCard from "./UserPassCard";
 import SpousePassCard from "./SpousePassCard";
 import { formatDateTime } from "../Utility/global";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
+// ─── Receipt PDF (onclone — zero blink, d-none never removed) ────────────────
+const generateReceiptPDF = async (element, filename = "document.pdf") => {
+  if (!element) {
+    console.error("generateReceiptPDF: element is null");
+    return;
+  }
+
+  await document.fonts.ready;
+
+  try {
+    const canvas = await html2canvas(element, {
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      scale: 3,
+      logging: false,
+      onclone: (clonedDoc) => {
+        const clonedEl = clonedDoc.querySelector("[data-pdf-capture]");
+        if (clonedEl) {
+          clonedEl.style.cssText =
+            "display:block !important; visibility:visible !important; " +
+            "position:static !important; opacity:1 !important; " +
+            "width:680px; background:#fff; padding:24px; box-sizing:border-box;";
+        }
+        clonedDoc.querySelectorAll("svg rect").forEach((rect) => {
+          rect.style.fill = "#ffffff";
+        });
+      },
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const A4_W = 210;
+    const A4_H = 297;
+
+    const ratio = canvas.height / canvas.width;
+    const imgH = A4_W * ratio;
+
+    if (imgH > A4_H) {
+      const scale = A4_H / imgH;
+      pdf.addImage(imgData, "PNG", 0, 0, A4_W * scale, A4_H);
+    } else {
+      pdf.addImage(imgData, "PNG", 0, (A4_H - imgH) / 2, A4_W, imgH);
+    }
+
+    pdf.save(filename);
+  } catch (err) {
+    console.error("generateReceiptPDF error:", err);
+  }
+};
+
+// ─── Entry Pass PDF (forces visibility, re-renders canvas barcode, restores) ──
+const generatePassPDF = async (element, filename = "document.pdf") => {
+  if (!element) {
+    console.error("generatePassPDF: element is null");
+    return;
+  }
+
+  await document.fonts.ready;
+
+  // Force full visibility so browser can paint the canvas
+  const prevStyle = element.getAttribute("style") || "";
+  element.style.cssText =
+    "display:block !important; visibility:visible !important; " +
+    "position:fixed !important; left:-9999px !important; top:0 !important; " +
+    "z-index:-1 !important; width:600px;";
+
+  // Two frames: one for layout, one for canvas paint
+  await new Promise((r) =>
+    requestAnimationFrame(() => requestAnimationFrame(r)),
+  );
+  await document.fonts.ready;
+
+  // Re-run JsBarcode on the canvas using the stamped data-barcode-value
+  const canvasEl = element.querySelector("canvas");
+  if (canvasEl) {
+    const barcodeValue = canvasEl.getAttribute("data-barcode-value");
+    if (barcodeValue) {
+      try {
+        JsBarcode(canvasEl, barcodeValue, {
+          format: "CODE128",
+          lineColor: "#000000",
+          background: "#ffffff",
+          width: 2,
+          height: 60,
+          displayValue: true,
+          fontSize: 16,
+          margin: 8,
+        });
+      } catch (e) {
+        console.error("Barcode re-render error:", e);
+      }
+    }
+  }
+
+  try {
+    const captured = await html2canvas(element, {
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      scale: 5,
+      logging: false,
+      onclone: (clonedDoc) => {
+        clonedDoc.querySelectorAll("svg rect").forEach((rect) => {
+          rect.style.fill = "#ffffff";
+        });
+      },
+    });
+
+    const imgData = captured.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const A4_W = 210;
+    const A4_H = 297;
+
+    const ratio = captured.height / captured.width;
+    const imgH = A4_W * ratio;
+
+    if (imgH > A4_H) {
+      const scale = A4_H / imgH;
+      pdf.addImage(imgData, "PNG", 0, 0, A4_W * scale, A4_H);
+    } else {
+      pdf.addImage(imgData, "PNG", 0, (A4_H - imgH) / 2, A4_W, imgH);
+    }
+
+    pdf.save(filename);
+  } catch (err) {
+    console.error("generatePassPDF error:", err);
+  } finally {
+    // Always restore the original hidden state
+    element.setAttribute("style", prevStyle);
+  }
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const DownloadModal = ({ selectedRegistration }) => {
-  const handleDownload = (type) => {
-    // Add your download logic here based on the type
-    // You can implement actual download functionality here
-  };
   const [primaryBarcodeData, setPrimaryBarcodeData] = useState("");
   const [spouseBarcodeData, setSpouseBarcodeData] = useState("");
+
   const receiptRef = useRef(null);
   const primaryBarcodeImageRef = useRef(null);
   const spouseBarcodeImageRef = useRef(null);
@@ -20,15 +151,11 @@ const DownloadModal = ({ selectedRegistration }) => {
   const spouseBarcodeRef = useRef(null);
 
   useEffect(() => {
-    if (!selectedRegistration) {
-      return;
-    }
-    // Set primary barcode data if available in userData
-    if (selectedRegistration.primaryBarcodeId) {
-      setPrimaryBarcodeData(selectedRegistration?.primaryBarcodeId);
-    }
+    if (!selectedRegistration) return;
 
-    // Set spouse barcode data if user has husband and barcode is available
+    if (selectedRegistration.primaryBarcodeId) {
+      setPrimaryBarcodeData(selectedRegistration.primaryBarcodeId);
+    }
     if (
       selectedRegistration.hasHusband &&
       selectedRegistration.spouseBarcodeId
@@ -38,47 +165,48 @@ const DownloadModal = ({ selectedRegistration }) => {
   }, [selectedRegistration]);
 
   useEffect(() => {
-    if (!selectedRegistration) {
-      return;
-    }
-    // Generate primary barcode when barcodeData is available and component is mounted
+    if (!selectedRegistration) return;
+
+    const opts = {
+      format: "CODE128",
+      lineColor: "#000",
+      width: 1.5,
+      height: 50,
+      displayValue: true,
+      fontSize: 12,
+      margin: 5,
+      background: "#fff",
+    };
+
     if (primaryBarcodeData && primaryBarcodeRef.current) {
       try {
-        JsBarcode(primaryBarcodeRef.current, primaryBarcodeData, {
-          format: "CODE128",
-          lineColor: "#000",
-          width: 1.5, // Reduced width
-          height: 50, // Reduced height
-          displayValue: true,
-          fontSize: 12, // Smaller font size
-          margin: 5, // Smaller margin
-          background: "#fff",
-        });
+        JsBarcode(primaryBarcodeRef.current, primaryBarcodeData, opts);
       } catch (error) {
         console.error("Error generating primary barcode:", error);
       }
     }
 
-    // Generate spouse barcode when data is available and user has husband
     if (
       selectedRegistration.hasHusband &&
       spouseBarcodeData &&
       spouseBarcodeRef.current
     ) {
       try {
-        JsBarcode(spouseBarcodeRef.current, spouseBarcodeData, {
-          format: "CODE128",
-          lineColor: "#000",
-          width: 1.5,
-          height: 50,
-          displayValue: true,
-          fontSize: 12,
-          margin: 5,
-          background: "#fff",
-        });
+        JsBarcode(spouseBarcodeRef.current, spouseBarcodeData, opts);
       } catch (error) {
         console.error("Error generating spouse barcode:", error);
       }
+    }
+
+    // Stamp barcode values onto the canvas elements inside each pass card
+    // so generatePassPDF can re-render them after forcing visibility
+    if (primaryBarcodeImageRef.current) {
+      const c = primaryBarcodeImageRef.current.querySelector("canvas");
+      if (c) c.setAttribute("data-barcode-value", primaryBarcodeData);
+    }
+    if (spouseBarcodeImageRef.current) {
+      const c = spouseBarcodeImageRef.current.querySelector("canvas");
+      if (c) c.setAttribute("data-barcode-value", spouseBarcodeData);
     }
   }, [
     primaryBarcodeData,
@@ -88,16 +216,24 @@ const DownloadModal = ({ selectedRegistration }) => {
     primaryBarcodeRef,
   ]);
 
-  const reactToPrintFn = useReactToPrint({
-    contentRef: receiptRef,
-  });
+  // ── PDF handlers ─────────────────────────────
+  const reactToPrintFn = async () => {
+    await generateReceiptPDF(receiptRef.current, "receipt.pdf");
+  };
 
-  const reactToPrintPrimaryPassFn = useReactToPrint({
-    contentRef: primaryBarcodeImageRef,
-  });
-  const reactToPrintSpousePassFn = useReactToPrint({
-    contentRef: spouseBarcodeImageRef,
-  });
+  const reactToPrintPrimaryPassFn = async () => {
+    await generatePassPDF(
+      primaryBarcodeImageRef.current,
+      "entry-pass-beti.pdf",
+    );
+  };
+
+  const reactToPrintSpousePassFn = async () => {
+    await generatePassPDF(
+      spouseBarcodeImageRef.current,
+      "entry-pass-damaad.pdf",
+    );
+  };
 
   return (
     <div
@@ -127,7 +263,6 @@ const DownloadModal = ({ selectedRegistration }) => {
 
           {/* Modal Body */}
           <div className="modal-body p-4">
-            {/* Registration Info */}
             {selectedRegistration && (
               <div className="alert alert-light border mb-4">
                 <div className="row g-2 small text-muted">
@@ -138,9 +273,8 @@ const DownloadModal = ({ selectedRegistration }) => {
               </div>
             )}
 
-            {/* Download Options */}
             <div className="row g-3">
-              {/* Download Receipt */}
+              {/* Receipt */}
               <div className="col-12">
                 <div className="card border-0 bg-light h-100 hover-shadow transition-all">
                   <div className="card-body d-flex align-items-center p-3">
@@ -158,7 +292,7 @@ const DownloadModal = ({ selectedRegistration }) => {
                     <button
                       type="button"
                       className="btn btn-success btn-sm px-3"
-                      onClick={() => reactToPrintFn()}
+                      onClick={reactToPrintFn}
                     >
                       <i className="bi bi-download me-1"></i>
                       Download
@@ -167,7 +301,7 @@ const DownloadModal = ({ selectedRegistration }) => {
                 </div>
               </div>
 
-              {/* Download Pass */}
+              {/* Primary Pass */}
               <div className="col-12">
                 <div className="card border-0 bg-light h-100 hover-shadow transition-all">
                   <div className="card-body d-flex align-items-center p-3">
@@ -185,7 +319,7 @@ const DownloadModal = ({ selectedRegistration }) => {
                     <button
                       type="button"
                       className="btn btn-primary btn-sm px-3"
-                      onClick={() => reactToPrintPrimaryPassFn()}
+                      onClick={reactToPrintPrimaryPassFn}
                     >
                       <i className="bi bi-download me-1"></i>
                       Download
@@ -194,7 +328,7 @@ const DownloadModal = ({ selectedRegistration }) => {
                 </div>
               </div>
 
-              {/* Download Pass Husband */}
+              {/* Spouse Pass */}
               {selectedRegistration?.hasHusband && (
                 <div className="col-12">
                   <div className="card border-0 bg-light h-100 hover-shadow transition-all">
@@ -213,7 +347,7 @@ const DownloadModal = ({ selectedRegistration }) => {
                       <button
                         type="button"
                         className="btn btn-info btn-sm px-3"
-                        onClick={() => reactToPrintSpousePassFn()}
+                        onClick={reactToPrintSpousePassFn}
                       >
                         <i className="bi bi-download me-1"></i>
                         Download
@@ -227,6 +361,7 @@ const DownloadModal = ({ selectedRegistration }) => {
         </div>
       </div>
 
+      {/* Pass cards — display:none set inside components, generatePassPDF forces visibility at capture time */}
       <UserPassCard
         userData={selectedRegistration}
         barcodeRef={primaryBarcodeRef}
@@ -241,6 +376,7 @@ const DownloadModal = ({ selectedRegistration }) => {
         />
       )}
 
+      {/* Receipt — stays d-none, revealed only inside onclone */}
       {selectedRegistration && (
         <ReciptComponent
           receiptRef={receiptRef}
@@ -253,6 +389,7 @@ const DownloadModal = ({ selectedRegistration }) => {
 
 export default DownloadModal;
 
+// ─── Receipt Component ────────────────────────────────────────────────────────
 const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
   const formatTrainName = (trainName, trainNameOther) => {
     if (!trainName) return "";
@@ -263,7 +400,7 @@ const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
   };
 
   return (
-    <div className="payment-success d-none" ref={receiptRef}>
+    <div className="payment-success d-none" ref={receiptRef} data-pdf-capture>
       <div className="receipt-header">
         <h2>बेटी तेरापंथ की</h2>
         <p>Registration Receipt</p>
@@ -278,26 +415,22 @@ const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
           <span>नाम:</span>
           <span>{selectedRegistration?.name}</span>
         </div>
-
         <div className="detail-item">
           <span>मोबाइल:</span>
           <span>{selectedRegistration?.phoneNumber}</span>
         </div>
-
         <div className="detail-item">
           <span>स्थान:</span>
           <span>
             {selectedRegistration?.city}, {selectedRegistration?.state}
           </span>
         </div>
-
         {selectedRegistration?.hasHusband && (
           <div className="detail-item">
             <span>जीवनसाथी:</span>
             <span>{selectedRegistration?.husbandName}</span>
           </div>
         )}
-
         <div className="detail-item">
           <span>आगमन:</span>
           <span>
@@ -305,7 +438,6 @@ const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
             {selectedRegistration?.arrivalTime}
           </span>
         </div>
-
         <div className="detail-item">
           <span>प्रस्थान:</span>
           <span>
@@ -313,15 +445,14 @@ const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
             {selectedRegistration?.departureTime}
           </span>
         </div>
-
         <div className="detail-item">
-          <span> आगमन यात्रा माध्यम:</span>
+          <span>आगमन यात्रा माध्यम:</span>
           <span>{selectedRegistration?.arrivalTravelMode}</span>
         </div>
         {selectedRegistration?.arrivalTravelMode === "Train" &&
           selectedRegistration?.arrivalTrainName && (
             <div className="detail-item">
-              <span> आगमन ट्रेन:</span>
+              <span>आगमन ट्रेन:</span>
               <span>
                 {formatTrainName(
                   selectedRegistration?.arrivalTrainName,
@@ -330,15 +461,14 @@ const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
               </span>
             </div>
           )}
-
         <div className="detail-item">
-          <span> प्रस्थान यात्रा माध्यम:</span>
+          <span>प्रस्थान यात्रा माध्यम:</span>
           <span>{selectedRegistration?.departureTravelMode}</span>
         </div>
         {selectedRegistration?.departureTravelMode === "Train" &&
           selectedRegistration?.departureTrainName && (
             <div className="detail-item">
-              <span> प्रस्थान ट्रेन:</span>
+              <span>प्रस्थान ट्रेन:</span>
               <span>
                 {formatTrainName(
                   selectedRegistration?.departureTrainName,
@@ -347,7 +477,6 @@ const ReciptComponent = ({ receiptRef, selectedRegistration }) => {
               </span>
             </div>
           )}
-
         <div className="detail-item">
           <span>दिनांक:</span>
           <span>{formatDateTime(selectedRegistration?.updatedAt)}</span>

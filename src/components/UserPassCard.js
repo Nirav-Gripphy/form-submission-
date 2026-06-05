@@ -1,14 +1,43 @@
 // components/UserPassCard.js
-import React from "react";
+import React, { useEffect } from "react";
+import JsBarcode from "jsbarcode";
 
-const UserPassCard = ({ userData, barcodeRef, cardRef }) => {
+const UserPassCard = ({ userData, barcodeValue, cardRef }) => {
+  const canvasRef = React.useRef(null);
+
+  // Render barcode into canvas whenever barcodeValue changes
+  useEffect(() => {
+    if (canvasRef.current && barcodeValue) {
+      try {
+        JsBarcode(canvasRef.current, barcodeValue, {
+          format: "CODE128",
+          lineColor: "#000000",
+          background: "#ffffff",
+          width: 2,
+          height: 60,
+          displayValue: true,
+          fontSize: 16,
+          margin: 8,
+        });
+      } catch (e) {
+        console.error("UserPassCard barcode error:", e);
+      }
+    }
+  }, [barcodeValue]);
+
   return (
-    <div className="entry-card d-none" ref={cardRef}>
+    <div
+      className="entry-card"
+      ref={cardRef}
+      data-pdf-target="true"
+      style={{ display: "none" }}
+    >
       <div className="entry-card-inner">
         <div className="entry-card-header">
           <img
             style={{ width: "60%" }}
-            src="./beti-terapanth-ki-logo.png"
+            src={`${window.location.origin}/beti-terapanth-ki-logo.png`}
+            crossOrigin="anonymous"
             alt="Logo"
             className="logo"
           />
@@ -23,8 +52,9 @@ const UserPassCard = ({ userData, barcodeRef, cardRef }) => {
           <br />
           जीवनसाथी के साथ : {userData?.hasHusband ? "हाँ" : "नहीं"}
         </div>
+        {/* canvas instead of svg — html2canvas captures canvas natively */}
         <div className="barcode-container">
-          <svg id="barcode" ref={barcodeRef} className="barcode-svg"></svg>
+          <canvas ref={canvasRef} style={{ maxWidth: "90%", height: "auto" }} />
         </div>
       </div>
     </div>

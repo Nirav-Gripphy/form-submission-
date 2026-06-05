@@ -1,4 +1,4 @@
-// components/PaymentConfirmation.js - Payment details and confirmation
+// components/PaymentConfirmation.js
 import { useState, useRef, useEffect } from "react";
 import {
   collection,
@@ -14,13 +14,174 @@ import {
 import "../styles/PaymentConfirmation.css";
 import { loadScript } from "../helper/loadScript";
 import axios from "axios";
-import { useReactToPrint } from "react-to-print";
 import { db } from "../services/firebase";
-import JsBarcode from "jsbarcode"; // Import JsBarcode library
+import JsBarcode from "jsbarcode";
 import { PaymentSuccessView } from "./PaymentSuccessView";
 import UserPassCard from "./UserPassCard";
 import SpousePassCard from "./SpousePassCard";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
+// ─────────────────────────────────────────────
+// Shared PDF helper
+// ─────────────────────────────────────────────
+const generatePassPDF = async (element, filename = "document.pdf") => {
+  if (!element) {
+    console.error("generatePDF: element is null");
+    return;
+  }
+
+  const prevStyle = element.getAttribute("style") || "";
+
+  // Reveal element off-screen
+  element.style.cssText =
+    "display:block !important; visibility:visible !important; position:fixed; left:-9999px; top:0; z-index:-1; background:#fff;";
+
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  await document.fonts.ready;
+
+  try {
+    const canvas = await html2canvas(element, {
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      scale: 3,
+      logging: false,
+      onclone: (clonedDoc) => {
+        // Fix transparent SVG barcode backgrounds
+        clonedDoc.querySelectorAll("svg rect").forEach((rect) => {
+          rect.style.fill = "#ffffff";
+        });
+        // Make sure cloned element is visible
+        clonedDoc.querySelectorAll("[data-pdf-target]").forEach((el) => {
+          el.style.cssText =
+            "display:block !important; visibility:visible !important;";
+        });
+      },
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const A4_W = 210;
+    const A4_H = 297;
+
+    const ratio = canvas.height / canvas.width;
+    const imgW = A4_W;
+    const imgH = imgW * ratio;
+    const yOffset = Math.max(0, (A4_H - imgH) / 2);
+
+    pdf.addImage(imgData, "PNG", 0, yOffset, imgW, Math.min(imgH, A4_H));
+    pdf.save(filename);
+  } catch (err) {
+    console.error("generatePDF error:", err);
+  } finally {
+    element.setAttribute("style", prevStyle);
+  }
+};
+
+// ─── Receipt PDF (uses onclone — no blink) ───────────────────────────────────
+const generateReceiptPDF = async (element, filename = "document.pdf") => {
+  if (!element) {
+    console.error("generatePDF: element is null");
+    return;
+  }
+
+  await document.fonts.ready;
+
+  try {
+    const canvas = await html2canvas(element, {
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      scale: 2,
+      logging: false,
+      // onclone gives us a full detached DOM copy — we show it there,
+      // the real element on screen is NEVER touched → zero blink
+      onclone: (_clonedDoc, clonedElement) => {
+        clonedElement.style.cssText =
+          "display:block !important; visibility:visible !important; position:static; background:#fff; width:600px; padding:20px; box-sizing:border-box;";
+      },
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const A4_W = 210;
+    const A4_H = 297;
+
+    const ratio = canvas.height / canvas.width;
+    const imgW = A4_W;
+    const imgH = imgW * ratio;
+
+    // If content is taller than one page, scale it down to fit
+    if (imgH > A4_H) {
+      const scale = A4_H / imgH;
+      pdf.addImage(imgData, "PNG", 0, 0, imgW * scale, A4_H);
+    } else {
+      const yOffset = (A4_H - imgH) / 2;
+      pdf.addImage(imgData, "PNG", 0, yOffset, imgW, imgH);
+    }
+
+    pdf.save(filename);
+  } catch (err) {
+    console.error("generatePDF error:", err);
+  }
+};
+
+// ─── Entry Pass PDF (original approach — moves element off-screen) ────────────
+// const generatePassPDF = async (element, filename = "document.pdf") => {
+//   if (!element) {
+//     console.error("generatePassPDF: element is null");
+//     return;
+//   }
+
+//   const prevStyle = element.getAttribute("style") || "";
+
+//   element.style.cssText =
+//     "display:block !important; visibility:visible !important; position:fixed; left:-9999px; top:0; z-index:-1; background:#fff;";
+
+//   await new Promise((resolve) => setTimeout(resolve, 200));
+//   await document.fonts.ready;
+
+//   try {
+//     const canvas = await html2canvas(element, {
+//       useCORS: true,
+//       allowTaint: false,
+//       backgroundColor: "#ffffff",
+//       scale: 3,
+//       logging: false,
+//       onclone: (clonedDoc) => {
+//         clonedDoc.querySelectorAll("svg rect").forEach((rect) => {
+//           rect.style.fill = "#ffffff";
+//         });
+//       },
+//     });
+
+//     const imgData = canvas.toDataURL("image/png");
+//     const pdf = new jsPDF("p", "mm", "a4");
+//     const A4_W = 210;
+//     const A4_H = 297;
+
+//     const ratio = canvas.height / canvas.width;
+//     const imgH = A4_W * ratio;
+
+//     if (imgH > A4_H) {
+//       const scale = A4_H / imgH;
+//       pdf.addImage(imgData, "PNG", 0, 0, A4_W * scale, A4_H);
+//     } else {
+//       pdf.addImage(imgData, "PNG", 0, (A4_H - imgH) / 2, A4_W, imgH);
+//     }
+
+//     pdf.save(filename);
+//   } catch (err) {
+//     console.error("generatePassPDF error:", err);
+//   } finally {
+//     element.setAttribute("style", prevStyle);
+//   }
+// };
+
+// ─────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────
 const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const [processing, setProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -31,169 +192,96 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
   const [orderId, setOrderId] = useState("");
   const [primaryBarcodeData, setPrimaryBarcodeData] = useState("");
   const [spouseBarcodeData, setSpouseBarcodeData] = useState("");
-  const receiptRef = useRef(null);
-  const primaryBarcodeImageRef = useRef(null);
-  const spouseBarcodeImageRef = useRef(null);
-  const primaryBarcodeRef = useRef(null);
-  const primaryBarcodePrintRef = useRef(null);
-  const spouseBarcodeRef = useRef(null);
-  const spouseBarcodePrintRef = useRef(null);
 
+  // ── Refs ─────────────────────────────────────
+  // receiptContentRef  → wraps ONLY the printable receipt content (no buttons)
+  const receiptContentRef = useRef(null);
+  const primaryBarcodeImageRef = useRef(null); // UserPassCard root
+  const spouseBarcodeImageRef = useRef(null); // SpousePassCard root
+  const primaryBarcodeRef = useRef(null); // SVG in success view
+  const primaryBarcodePrintRef = useRef(null); // SVG in UserPassCard
+  const spouseBarcodeRef = useRef(null); // SVG in success view
+  const spouseBarcodePrintRef = useRef(null); // SVG in SpousePassCard
+
+  // ── Restore on mount ─────────────────────────
   useEffect(() => {
     if (userData.paymentStatus === "completed") {
       setPaymentSuccess(true);
       setPaymentId(userData.paymentId);
       setOrderId(userData.orderId);
-
-      // Set primary barcode data if available in userData
-      if (userData.primaryBarcodeId) {
-        setPrimaryBarcodeData(userData?.primaryBarcodeId);
-      }
-
-      // Set spouse barcode data if user has husband and barcode is available
-      if (userData.hasHusband && userData.spouseBarcodeId) {
+      if (userData.primaryBarcodeId)
+        setPrimaryBarcodeData(userData.primaryBarcodeId);
+      if (userData.hasHusband && userData.spouseBarcodeId)
         setSpouseBarcodeData(userData.spouseBarcodeId);
-      }
     }
     setRegistrationId(userData.id);
   }, [userData]);
 
+  // ── Generate barcodes ────────────────────────
   useEffect(() => {
-    // Generate primary barcode when barcodeData is available and component is mounted
-    if (primaryBarcodeData && primaryBarcodeRef.current) {
-      try {
-        JsBarcode(primaryBarcodeRef.current, primaryBarcodeData, {
-          format: "CODE128",
-          lineColor: "#000",
-          width: 1.5, // Reduced width
-          height: 50, // Reduced height
-          displayValue: true,
-          fontSize: 12, // Smaller font size
-          margin: 5, // Smaller margin
-          background: "#fff",
-        });
-        JsBarcode(primaryBarcodePrintRef.current, primaryBarcodeData, {
-          format: "CODE128",
-          lineColor: "#000",
-          width: 1.5, // Reduced width
-          height: 50, // Reduced height
-          displayValue: true,
-          fontSize: 12, // Smaller font size
-          margin: 5, // Smaller margin
-          background: "#fff",
-        });
-      } catch (error) {
-        console.error("Error generating primary barcode:", error);
-      }
+    const opts = {
+      format: "CODE128",
+      lineColor: "#000",
+      width: 1.5,
+      height: 50,
+      displayValue: true,
+      fontSize: 12,
+      margin: 5,
+      background: "#fff",
+    };
+
+    if (primaryBarcodeData) {
+      [primaryBarcodeRef, primaryBarcodePrintRef].forEach((ref) => {
+        if (ref.current) {
+          try {
+            JsBarcode(ref.current, primaryBarcodeData, opts);
+          } catch (e) {
+            console.error("Primary barcode error:", e);
+          }
+        }
+      });
     }
 
-    // Generate spouse barcode when data is available and user has husband
-    if (userData.hasHusband && spouseBarcodeData && spouseBarcodeRef.current) {
-      try {
-        JsBarcode(spouseBarcodeRef.current, spouseBarcodeData, {
-          format: "CODE128",
-          lineColor: "#000",
-          width: 1.5,
-          height: 50,
-          displayValue: true,
-          fontSize: 12,
-          margin: 5,
-          background: "#fff",
-        });
-        JsBarcode(spouseBarcodePrintRef.current, spouseBarcodeData, {
-          format: "CODE128",
-          lineColor: "#000",
-          width: 1.5,
-          height: 50,
-          displayValue: true,
-          fontSize: 12,
-          margin: 5,
-          background: "#fff",
-        });
-      } catch (error) {
-        console.error("Error generating spouse barcode:", error);
-      }
+    if (userData.hasHusband && spouseBarcodeData) {
+      [spouseBarcodeRef, spouseBarcodePrintRef].forEach((ref) => {
+        if (ref.current) {
+          try {
+            JsBarcode(ref.current, spouseBarcodeData, opts);
+          } catch (e) {
+            console.error("Spouse barcode error:", e);
+          }
+        }
+      });
     }
   }, [
     primaryBarcodeData,
     spouseBarcodeData,
     userData.hasHusband,
     paymentSuccess,
-    spouseBarcodeRef,
-    primaryBarcodeRef,
   ]);
 
-  const reactToPrintFn = useReactToPrint({
-    contentRef: receiptRef,
-  });
+  // ── PDF handlers ─────────────────────────────
 
-  const reactToPrintPrimaryPassFn = useReactToPrint({
-    contentRef: primaryBarcodeImageRef,
-  });
-  const reactToPrintSpousePassFn = useReactToPrint({
-    contentRef: spouseBarcodeImageRef,
-  });
-
-  // Function to get the next barcode number from Firebase
-  const getNextBarcodeNumber = async () => {
-    try {
-      // Query to get the latest registration with a barcode
-      const registrationsRef = collection(db, "registration-2026");
-      const q = query(
-        registrationsRef,
-        where("primaryBarcodeId", ">=", "B-"), // Look for barcodes starting with B-
-        orderBy("primaryBarcodeId", "desc"), // Order by barcode ID in descending order
-        limit(1), // Get only the latest one
-      );
-
-      const querySnapshot = await getDocs(q);
-
-      // Default starting number if no barcodes exist yet
-      let nextNumber = 1;
-
-      if (!querySnapshot.empty) {
-        // Get the latest barcode ID
-        const latestDoc = querySnapshot.docs[0];
-        const latestBarcodeId = latestDoc.data().primaryBarcodeId;
-
-        // Extract the number part (after "B-")
-        const numberPart = latestBarcodeId.split("-")[1];
-        // Convert to number and increment
-        nextNumber = parseInt(numberPart, 10) + 1;
-      }
-
-      // Format the number with leading zeros (e.g. 00001)
-      const formattedNumber = String(nextNumber).padStart(5, "0");
-
-      return {
-        primaryBarcodeId: `B-${formattedNumber}`,
-        spouseBarcodeId: `D-${formattedNumber}`,
-      };
-    } catch (error) {
-      console.error("Error getting next barcode number:", error);
-      // Fallback to default format with timestamp if there's an error
-      const timestamp = Date.now();
-      return {
-        primaryBarcodeId: `B-${timestamp}`,
-        spouseBarcodeId: `D-${timestamp}`,
-      };
-    }
+  // 1. Receipt
+  const reactToPrintFn = async () => {
+    await generateReceiptPDF(receiptContentRef.current, "receipt.pdf");
   };
 
-  // Calculate payment amount based on user data
-  const calculateAmount = () => {
-    let amount = userData.hasHusband ? 1000 : 500;
-    // Testing////
-    // You could add additional cost calculations here if needed
-    return amount;
+  // 2. Primary entry pass — barcode rendered by UserPassCard into <canvas>
+  const reactToPrintPrimaryPassFn = async () => {
+    await generatePassPDF(primaryBarcodeImageRef.current, "entry-pass-beti.pdf");
   };
+
+  // 3. Spouse entry pass — barcode rendered by SpousePassCard into <canvas>
+  const reactToPrintSpousePassFn = async () => {
+    await generatePassPDF(spouseBarcodeImageRef.current, "entry-pass-damaad.pdf");
+  };
+
+  // ── Firebase helpers ─────────────────────────
+  const calculateAmount = () => (userData.hasHusband ? 1000 : 500);
 
   const saveRegistration = async (paymentDetails = {}, barcodeData = {}) => {
     try {
-      // Generate attendee count for barcode
-      const attendeeCount = userData.hasHusband ? "2" : "1";
-
-      // Registration data to save/update
       const registrationData = {
         phoneNumber: userData.phoneNumber,
         name: userData.name,
@@ -206,49 +294,39 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
         arrivalDate: userData.arrivalDate,
         arrivalTime: userData.arrivalTime,
         arrivalTravelMode: userData.arrivalTravelMode,
+        arrivalTrainName: userData.arrivalTrainName,
+        arrivalTrainNameOther: userData.arrivalTrainNameOther,
         departureDate: userData.departureDate,
         departureTime: userData.departureTime,
         departureTravelMode: userData.departureTravelMode,
+        departureTrainName: userData.departureTrainName,
+        departureTrainNameOther: userData.departureTrainNameOther,
         additionalPeople: userData.additionalPeople,
         paymentAmount: calculateAmount(),
         paymentStatus: paymentDetails.status || "failed",
         paymentId: paymentDetails.paymentId || "",
         orderId: paymentDetails.orderId || "",
-        attendeeCount: attendeeCount,
+        attendeeCount: userData.hasHusband ? "2" : "1",
         primaryBarcodeId: barcodeData.primaryBarcodeId || "",
+        spouseBarcodeId: userData.hasHusband
+          ? barcodeData.spouseBarcodeId || ""
+          : "",
         updatedAt: new Date(),
-        spouseBarcodeId: "",
       };
 
-      // Add spouse barcode ID if user has husband
-      if (userData.hasHusband) {
-        registrationData.spouseBarcodeId = barcodeData.spouseBarcodeId || "";
-      }
-
-      // Add registrationDate only for new records
-      if (!registrationId) {
-        registrationData.registrationDate = new Date();
-      }
+      if (!registrationId) registrationData.registrationDate = new Date();
 
       let regId = registrationId;
-
       if (regId) {
-        // Update the existing failed registration
-        // console.log("Updating existing registration:", regId);
-        const registrationDocRef = doc(db, "registration-2026", regId);
-        await updateDoc(registrationDocRef, registrationData);
+        await updateDoc(doc(db, "registration-2026", regId), registrationData);
       } else {
-        // Create a new registration
-        // console.log("Creating new registration");
-        const registrationRef = await addDoc(
+        const ref = await addDoc(
           collection(db, "registration-2026"),
           registrationData,
         );
-        regId = registrationRef.id;
-        // Store the registration ID in state for potential retries
+        regId = ref.id;
         setRegistrationId(regId);
       }
-
       return regId;
     } catch (error) {
       console.error("Error saving/updating registration:", error);
@@ -258,15 +336,11 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
 
   const handlePaymentSuccess = async (paymentDetails) => {
     try {
-      // console.log("Payment success with registrationId:", registrationId);
-
-      // Get next barcode numbers
       const barcodeData = {
         primaryBarcodeId: userData.primaryBarcodeId,
         spouseBarcodeId: userData.spouseBarcodeId,
       };
 
-      // Save/update registration in Firebase with the barcode data
       const regId = await saveRegistration(
         {
           status: "completed",
@@ -280,31 +354,10 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
       setOrderId(paymentDetails.razorpayOrderId);
       setPaymentSuccess(true);
       setPaymentFailed(false);
-
-      // Set barcode data for display
       setPrimaryBarcodeData(userData.primaryBarcodeId);
-      if (userData.hasHusband) {
-        setSpouseBarcodeData(userData.spouseBarcodeId);
-      }
-
-      // Update the payment status and user data
-      const updatedData = {
-        paymentStatus: "completed",
-        paymentAmount: calculateAmount(),
-        paymentId: paymentDetails.razorpayPaymentId,
-        orderId: paymentDetails.razorpayOrderId,
-        id: regId,
-        primaryBarcodeId: userData.primaryBarcodeId,
-      };
-
-      // Add spouse barcode ID if exists
-      if (userData.hasHusband) {
-        updatedData.spouseBarcodeId = userData.spouseBarcodeId;
-      }
-
-      // updateUserData(updatedData);
+      if (userData.hasHusband) setSpouseBarcodeData(userData.spouseBarcodeId);
     } catch (error) {
-      console.error("Error processing successful payment:", error);
+      console.error("Error processing payment:", error);
       setPaymentFailed(true);
       setError(
         "भुगतान सफल हुआ, लेकिन पंजीकरण की प्रक्रिया में त्रुटि हुई। कृपया संपर्क करें।",
@@ -314,11 +367,10 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     }
   };
 
-  const handlePaymentFailure = async (error) => {
+  const handlePaymentFailure = (error) => {
     setProcessing(false);
     setPaymentFailed(true);
     setPaymentSuccess(false);
-
     setError(
       `भुगतान असफल: ${error.description || error.message || "अज्ञात त्रुटि"}`,
     );
@@ -331,7 +383,6 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     const res = await loadScript(
       "https://checkout.razorpay.com/v1/checkout.js",
     );
-
     if (!res) {
       setProcessing(false);
       setPaymentFailed(true);
@@ -340,30 +391,22 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     }
 
     const amount = calculateAmount() * 100;
-
     try {
       const response = await axios.post(
         "https://beti-terapanth-ki.griphhy.com/razorpay-order-api.php",
-        {
-          amount: amount,
-          currency: "INR",
-          // env: "dev", // fpr local only
-        },
+        { amount, currency: "INR" },
       );
 
       if (response?.data) {
-        const order_id = response?.data?.id;
-        // Getting the order details back
+        const order_id = response.data.id;
         const { name, phoneNumber } = userData;
 
         const options = {
           key: process.env.REACT_APP_RAZORPAY_API_KEY,
-          amount: amount,
+          amount,
           currency: "INR",
           name: "BETI TERAPANTH KI Registration",
           description: "Registration Payment",
-          //   image: { logo },
-          // Enable all methods
           method: {
             card: true,
             netbanking: true,
@@ -372,18 +415,13 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
             emi: false,
             paylater: false,
           },
-
-          // Configure UPI to hide QR but show collect
           config: {
             display: {
               blocks: {
                 utib: {
                   name: "UPI",
                   instruments: [
-                    {
-                      method: "upi",
-                      flows: ["collect", "intent"], // Show UPI apps but not QR
-                    },
+                    { method: "upi", flows: ["collect", "intent"] },
                   ],
                 },
                 banks: {
@@ -395,69 +433,45 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
                   ],
                 },
               },
-              hide: [
-                {
-                  method: "upi",
-                  flows: ["qr"], // Hide QR code specifically
-                },
-              ],
+              hide: [{ method: "upi", flows: ["qr"] }],
               sequence: ["block.utib", "block.banks"],
-              preferences: {
-                show_default_blocks: false,
-              },
+              preferences: { show_default_blocks: false },
             },
           },
-
-          order_id: order_id,
-          handler: async function (response) {
-            const paymentDetails = {
+          order_id,
+          handler: async (response) => {
+            await handlePaymentSuccess({
               orderCreationId: order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpayOrderId: response.razorpay_order_id,
               razorpaySignature: response.razorpay_signature,
-            };
-            await handlePaymentSuccess(paymentDetails);
+            });
           },
-          prefill: {
-            name: name,
-            email: "",
-            contact: phoneNumber,
-          },
-          notes: {
-            address: "Beti Terapanth Ki Office",
-          },
-          theme: {
-            color: "#61dafb",
-          },
-          modal: {
-            ondismiss: function () {
-              setProcessing(false);
-            },
-          },
+          prefill: { name, email: "", contact: phoneNumber },
+          notes: { address: "Beti Terapanth Ki Office" },
+          theme: { color: "#61dafb" },
+          modal: { ondismiss: () => setProcessing(false) },
         };
 
         const paymentObject = new window.Razorpay(options);
-        paymentObject.on("payment.failed", function (response) {
-          handlePaymentFailure(response.error);
-        });
+        paymentObject.on("payment.failed", (r) =>
+          handlePaymentFailure(r.error),
+        );
         paymentObject.open();
       }
     } catch (error) {
-      console.error(error);
       handlePaymentFailure(error);
     }
   };
 
-  // Payment Failed View
+  // ── Payment Failed View ──────────────────────
   const PaymentFailedView = () => (
     <div className="payment-failed">
       <div className="failed-icon">
         <i className="fas fa-times-circle"></i>
       </div>
-
       <h3>भुगतान असफल</h3>
       <p>{error}</p>
-
       {registrationId && (
         <div className="failed-registration-id">
           <p>
@@ -466,21 +480,17 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           <p>कृपया समस्या के समाधान के लिए इस आईडी का उल्लेख करें।</p>
         </div>
       )}
-
       <div className="retry-options">
         <p>कृपया पुनः प्रयास करें या वैकल्पिक भुगतान विधि का उपयोग करें।</p>
         <button
           className="btn btn-primary retry-btn"
           onClick={() => {
-            // Just clear error and payment failed state, but KEEP the registrationId
             setPaymentFailed(false);
             setError("");
-            // No need to reset registrationId here
           }}
         >
           पुनः प्रयास करें
         </button>
-
         <p className="contact-support">
           समस्या बनी रहने पर कृपया हमसे संपर्क करें:{" "}
           <strong>support@betiterapanthki.org</strong>
@@ -489,39 +499,37 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     </div>
   );
 
-  // Render based on payment state
+  // ── Render ───────────────────────────────────
   if (paymentSuccess) {
     return (
       <div className="payment-result-container">
-        <div ref={receiptRef}>
-          <PaymentSuccessView
-            receiptRef={receiptRef}
-            userData={userData}
-            reactToPrintFn={reactToPrintFn}
-            primaryBarcodeRef={primaryBarcodeRef}
-            reactToPrintSpousePassFn={reactToPrintSpousePassFn}
-            reactToPrintPrimaryPassFn={reactToPrintPrimaryPassFn}
-            paymentId={paymentId}
-            primaryBarcodeData={primaryBarcodeData}
-            spouseBarcodeRef={spouseBarcodeRef}
-            spouseBarcodeData={spouseBarcodeData}
-            primaryBarcodeImageRef={primaryBarcodeImageRef}
-            spouseBarcodeImageRef={spouseBarcodeImageRef}
-            primaryBarcodePrintRef={primaryBarcodePrintRef}
-            spouseBarcodePrintRef={spouseBarcodePrintRef}
-          />
-        </div>
-
-        <UserPassCard
+        <PaymentSuccessView
+          receiptContentRef={receiptContentRef} // ← renamed prop
           userData={userData}
-          barcodeRef={primaryBarcodePrintRef}
-          cardRef={primaryBarcodeImageRef}
+          reactToPrintFn={reactToPrintFn}
+          primaryBarcodeRef={primaryBarcodeRef}
+          reactToPrintSpousePassFn={reactToPrintSpousePassFn}
+          reactToPrintPrimaryPassFn={reactToPrintPrimaryPassFn}
+          paymentId={paymentId}
+          primaryBarcodeData={primaryBarcodeData}
+          spouseBarcodeRef={spouseBarcodeRef}
+          spouseBarcodeData={spouseBarcodeData}
+          primaryBarcodeImageRef={primaryBarcodeImageRef}
+          spouseBarcodeImageRef={spouseBarcodeImageRef}
+          primaryBarcodePrintRef={primaryBarcodePrintRef}
+          spouseBarcodePrintRef={spouseBarcodePrintRef}
         />
 
+        {/* Pass cards — canvas barcode rendered inside each component via useEffect */}
+        <UserPassCard
+          userData={userData}
+          barcodeValue={primaryBarcodeData}
+          cardRef={primaryBarcodeImageRef}
+        />
         {userData.hasHusband && (
           <SpousePassCard
             userData={userData}
-            barcodeRef={spouseBarcodePrintRef}
+            barcodeValue={spouseBarcodeData}
             cardRef={spouseBarcodeImageRef}
           />
         )}
@@ -529,45 +537,35 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
     );
   }
 
-  if (paymentFailed) {
-    return <PaymentFailedView />;
-  }
+  if (paymentFailed) return <PaymentFailedView />;
 
-  // Default payment form view
   return (
     <div className="payment-container">
       <h3 className="form-section-title">Payment Details</h3>
-
       {error && <div className="alert alert-danger">{error}</div>}
-
       <div className="payment-summary">
         <div className="summary-item">
           <span>Name:</span>
           <span>{userData.name}</span>
         </div>
-
         <div className="summary-item">
           <span>Mobile:</span>
           <span>{userData.phoneNumber}</span>
         </div>
-
         <div className="summary-item">
           <span>City:</span>
           <span>{[userData?.city, userData?.state].join(", ")}</span>
         </div>
-
         {userData.hasHusband && (
           <div className="summary-item">
             <span>Husband:</span>
             <span>{userData.husbandName}</span>
           </div>
         )}
-
         <div className="summary-item payment-amount">
           <span>Total Amount:</span>
           <span>₹{calculateAmount()}</span>
         </div>
-
         <div className="payment-details">
           <h4>Payment Details</h4>
           <p>
@@ -577,7 +575,6 @@ const PaymentConfirmation = ({ userData, updateUserData, prevStep }) => {
           </p>
         </div>
       </div>
-
       <div className="form-buttons">
         <button
           type="button"
