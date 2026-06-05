@@ -71,7 +71,7 @@ const generatePassPDF = async (element, filename = "document.pdf") => {
   element.style.cssText =
     "display:block !important; visibility:visible !important; " +
     "position:fixed !important; left:-9999px !important; top:0 !important; " +
-    "z-index:-1 !important; width:600px;";
+    "z-index:-1 !important; width:400px;";
 
   // Two frames: one for layout, one for canvas paint
   await new Promise((r) =>
