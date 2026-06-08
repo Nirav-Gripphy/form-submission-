@@ -7,6 +7,7 @@ import DetailsModal from "../components/DetailsModal";
 import GuestModal from "../components/GuestModal";
 import { exportToExcelWithExcelJS } from "../Utility/exportUtils";
 import DownloadModal from "../components/DownloadModal";
+import EditGuestsModal from "../components/EditGuestsModal";
 
 // ─── Static data (mirrors registration form) ─────────────────────────────────
 const TRAIN_LIST = [
@@ -36,6 +37,7 @@ const DEFAULT_FILTERS = {
   departureTravelMode: "",
   departureTrainName: "",
   departureDate: "",
+  status: "",   // add this
 };
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -130,6 +132,15 @@ const useFilters = (registrations, searchTerm, filters) =>
     // Departure date  (field: departureDate)
     if (filters.departureDate) {
       result = result.filter((r) => r.departureDate === filters.departureDate);
+    }
+
+    // In useFilters, add:
+    if (filters.status) {
+      result = result.filter((r) =>
+        filters.status === "completed"
+          ? r.registrationStep === 4
+          : r.registrationStep !== 4
+      );
     }
 
     return result;
@@ -354,6 +365,19 @@ const FilterOffcanvas = React.memo(
 
           {/* ── Body ── */}
           <div className="px-4 py-3 flex-grow-1">
+
+            <div className="mb-3">
+              <label className="form-label small text-muted mb-1">Status</label>
+              <select
+                className={`form-select form-select-sm ${filters.status ? "border-primary" : ""}`}
+                value={filters.status}
+                onChange={(e) => set("status", e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
             {/* Active chips */}
             {chips.length > 0 && (
               <div className="d-flex flex-wrap gap-1 mb-4">
@@ -366,16 +390,16 @@ const FilterOffcanvas = React.memo(
                     onRemove={() =>
                       chip.key === "arrivalTravelMode"
                         ? onChange({
-                            ...filters,
-                            arrivalTravelMode: "",
-                            arrivalTrainName: "",
-                          })
+                          ...filters,
+                          arrivalTravelMode: "",
+                          arrivalTrainName: "",
+                        })
                         : chip.key === "departureTravelMode"
                           ? onChange({
-                              ...filters,
-                              departureTravelMode: "",
-                              departureTrainName: "",
-                            })
+                            ...filters,
+                            departureTravelMode: "",
+                            departureTrainName: "",
+                          })
                           : set(chip.key, "")
                     }
                   />
@@ -646,6 +670,14 @@ const ActionButtons = React.memo(({ registration, onOpenModal }) => (
         </span>
       </button>
     )}
+    {registration.registrationStep === 4 && <button
+      type="button"
+      className="btn btn-outline-success btn-sm"
+      onClick={() => onOpenModal(registration, "editGuests")}
+      title="Edit guests & husband"
+    >
+      <i className="bi bi-pencil-square"></i> {registration.step}
+    </button>}
   </div>
 ));
 
@@ -780,6 +812,7 @@ const RegistrationList = () => {
                         <th className="d-none d-lg-table-cell">Arrival</th>
                         <th className="d-none d-xl-table-cell">Departure</th>
                         <th className="d-none d-lg-table-cell">Reg. Time</th>
+                        <th>Status</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -910,8 +943,13 @@ const RegistrationList = () => {
                             {formatDateTime(reg.updatedAt)}
                           </td>
 
+                          <td>
+                            <StatusBadge step={reg.registrationStep} />
+                          </td>
+
                           {/* Actions */}
                           <td>
+                            {console.log(reg)}
                             <ActionButtons
                               registration={reg}
                               onOpenModal={openModal}
@@ -952,6 +990,12 @@ const RegistrationList = () => {
         key="download_modal"
       />
 
+      <EditGuestsModal
+        selectedRegistration={selectedRegistration}
+        onSaveSuccess={refetch}   // re-fetches the list after save
+        key="edit_guests_modal"
+      />
+
       <footer className="text-center py-4 mt-5">
         <img
           src="./footer.svg"
@@ -970,5 +1014,15 @@ SearchInput.displayName = "SearchInput";
 StatsDisplay.displayName = "StatsDisplay";
 ActionButtons.displayName = "ActionButtons";
 FilterOffcanvas.displayName = "FilterOffcanvas";
+
+const StatusBadge = ({ step }) => {
+  const isCompleted = step === 4;
+  return (
+    <span className={`badge ${isCompleted ? "bg-success" : "bg-warning text-dark"} d-inline-flex align-items-center gap-1`}>
+      <i className={`bi ${isCompleted ? "bi-check-circle-fill" : "bi-clock-fill"}`}></i>
+      {isCompleted ? "Completed" : "Pending"}
+    </span>
+  );
+};
 
 export default RegistrationList;
