@@ -120,7 +120,9 @@ const RegistrationForm = ({ db, storage }) => {
 
         setRegistrationId(registrationSnapshot.docs[0].id);
         setUserExists(true);
-        setStep(regData?.paymentStatus === "pending" ? 1 : 5); // Step for already registered users
+        setStep(
+          regData?.paymentStatus === "pending" ? 1 : regData?.isDeleted ? 1 : 5,
+        ); // Step for already registered users
         return;
       }
 
@@ -240,6 +242,7 @@ const RegistrationForm = ({ db, storage }) => {
           ...updatedData,
           updatedAt: new Date(),
           registrationStep: step,
+          isDeleted: false,
         };
 
         if (registrationId) {

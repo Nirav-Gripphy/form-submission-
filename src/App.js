@@ -26,7 +26,7 @@ import RegistrationList from "./page/RegistrationList";
 function App() {
   return (
     <Router
-    // basename="/registration2026"
+    // basename="/registration2026" 
     >
       <div className="App">
         <Routes>
@@ -36,7 +36,10 @@ function App() {
           />{" "}
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/policy" element={<TermsAndConditions />} />
-          <Route path="/registration-list" element={<RegistrationList />} />
+          <Route
+            path="/registration-list"
+            element={<RegistrationList storage={storage} />}
+          />
         </Routes>
       </div>
     </Router>
