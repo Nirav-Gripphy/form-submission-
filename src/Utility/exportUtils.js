@@ -38,7 +38,7 @@ const generateBarcodeBuffer = (text, width = 300, height = 100) => {
 // ExcelJS Implementation
 export const exportToExcelWithExcelJS = async (
   data,
-  filename = "registrations-with-barcodes.xlsx"
+  filename = "registrations-with-barcodes.xlsx",
 ) => {
   if (!data.length) {
     alert("No data to export");
@@ -95,8 +95,6 @@ export const exportToExcelWithExcelJS = async (
       "Additional People",
       "Created At",
       "Updated At",
-      "Photo URL",
-      "Husband Photo URL",
       "Arrival Date",
       "Arrival Time",
       "Arrival Travel Mode",
@@ -105,6 +103,7 @@ export const exportToExcelWithExcelJS = async (
       "Departure Time",
       "Departure Travel Mode",
       "Departure Train Name",
+      "Status",
       "Primary Barcode",
       "Spouse Barcode",
     ];
@@ -132,6 +131,12 @@ export const exportToExcelWithExcelJS = async (
       const registration = data[i];
       const rowIndex = i + 2; // Excel is 1-indexed, +1 for header
 
+      const isCompleted = registration.registrationStep === 4;
+      const statusText = isCompleted
+        ? registration.markAsVerified === true
+          ? "Verified"
+          : "Completed"
+        : "Pending";
       // Add row data
       const rowData = [
         registration.registrationId || registration.id,
@@ -148,8 +153,6 @@ export const exportToExcelWithExcelJS = async (
           .join(", ") || "",
         registration.createdAt ? formatDateTime(registration.createdAt) : "",
         registration.updatedAt ? formatDateTime(registration.updatedAt) : "",
-        registration.photoURL || "",
-        registration.husbandPhotoURL || "",
         registration.arrivalDate || "",
         registration.arrivalTime || "",
         registration.arrivalTravelMode || "",
@@ -158,6 +161,7 @@ export const exportToExcelWithExcelJS = async (
         registration.departureTime || "",
         registration.departureTravelMode || "",
         registration.departureTrainName || "",
+        statusText,
         "", // Placeholder for primary barcode
         "", // Placeholder for spouse barcode
       ];
@@ -168,7 +172,7 @@ export const exportToExcelWithExcelJS = async (
       // Generate and add primary barcode
       if (registration.primaryBarcodeId) {
         const primaryBarcodeBuffer = await generateBarcodeBuffer(
-          registration.primaryBarcodeId
+          registration.primaryBarcodeId,
         );
         if (primaryBarcodeBuffer) {
           const primaryImageId = workbook.addImage({
@@ -186,7 +190,7 @@ export const exportToExcelWithExcelJS = async (
       // Generate and add spouse barcode
       if (registration.spouseBarcodeId) {
         const spouseBarcodeBuffer = await generateBarcodeBuffer(
-          registration.spouseBarcodeId
+          registration.spouseBarcodeId,
         );
         if (spouseBarcodeBuffer) {
           const spouseImageId = workbook.addImage({
@@ -227,7 +231,7 @@ export const exportToExcelWithExcelJS = async (
     alert("Failed to export Excel file. Please try again.");
 
     const loadingAlert = document.querySelector(
-      'div[style*="position: fixed"]'
+      'div[style*="position: fixed"]',
     );
     if (loadingAlert) {
       document.body.removeChild(loadingAlert);
@@ -240,7 +244,7 @@ export const exportToExcelWithExcelJS = async (
 
 export const exportToExcelWithReactExcel = async (
   data,
-  filename = "registrations-with-barcodes.xlsx"
+  filename = "registrations-with-barcodes.xlsx",
 ) => {
   if (!data.length) {
     alert("No data to export");
@@ -255,7 +259,7 @@ export const exportToExcelWithReactExcel = async (
     const processedData = await Promise.all(
       data.map(async (registration) => {
         const primaryBarcode = generateBarcodeImage(
-          registration.primaryBarcodeId || registration.id
+          registration.primaryBarcodeId || registration.id,
         );
         const spouseBarcode = registration.spouseBarcodeId
           ? generateBarcodeImage(registration.spouseBarcodeId)
@@ -294,7 +298,7 @@ export const exportToExcelWithReactExcel = async (
           primaryBarcode: primaryBarcode || "",
           spouseBarcode: spouseBarcode || "",
         };
-      })
+      }),
     );
 
     // Create Excel file component
@@ -407,7 +411,7 @@ export const exportToCSV = (data, filename = "registrations-export.csv") => {
             }
             return value;
           })
-          .join(",")
+          .join(","),
       ),
     ].join("\n");
 

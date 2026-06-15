@@ -142,11 +142,12 @@ const useFilters = (registrations, searchTerm, filters, showDeleted) =>
       result = result.filter((r) => r.departureDate === filters.departureDate);
     }
     if (filters.status) {
-      result = result.filter((r) =>
-        filters.status === "completed"
-          ? r.registrationStep === 4
-          : r.registrationStep !== 4,
-      );
+      result = result.filter((r) => {
+        if (filters.status === "completed") return r.registrationStep === 4;
+        if (filters.status === "verified") return r.markAsVerified === true;
+        if (filters.status === "pending") return r.registrationStep !== 4;
+        return true;
+      });
     }
 
     return result;
@@ -543,6 +544,7 @@ const FilterOffcanvas = React.memo(
                 <option value="">All</option>
                 <option value="completed">Completed</option>
                 <option value="pending">Pending</option>
+                <option value="verified">Verified</option>
               </select>
             </div>
 
@@ -929,7 +931,7 @@ const ActionButtons = React.memo(
 ActionButtons.displayName = "ActionButtons";
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
-const StatusBadge = ({ step, isDeleted }) => {
+const StatusBadge = ({ step, isDeleted, markAsVerified }) => {
   if (isDeleted) {
     return (
       <span className="badge bg-danger bg-opacity-75 d-inline-flex align-items-center gap-1">
@@ -939,14 +941,28 @@ const StatusBadge = ({ step, isDeleted }) => {
     );
   }
   const isCompleted = step === 4;
+  const statusText = isCompleted
+    ? markAsVerified
+      ? "Verified"
+      : "Completed"
+    : "Pending";
   return (
     <span
-      className={`badge ${isCompleted ? "bg-success" : "bg-warning text-dark"} d-inline-flex align-items-center gap-1`}
+      className={`badge ${
+        isCompleted
+          ? markAsVerified
+            ? "bg-purple text-white" // or "text-bg-info" / inline style
+            : "bg-success"
+          : "bg-warning text-dark"
+      } d-inline-flex align-items-center gap-1`}
+      style={
+        markAsVerified && isCompleted ? { backgroundColor: "#6f42c1" } : {}
+      }
     >
       <i
         className={`bi ${isCompleted ? "bi-check-circle-fill" : "bi-clock-fill"}`}
       ></i>
-      {isCompleted ? "Completed" : "Pending"}
+      {statusText}
     </span>
   );
 };
@@ -1426,6 +1442,7 @@ const RegistrationList = ({ storage }) => {
                           <td>
                             <StatusBadge
                               step={reg.registrationStep}
+                              markAsVerified={reg.markAsVerified}
                               isDeleted={reg.isDeleted}
                             />
                           </td>
@@ -1467,6 +1484,7 @@ const RegistrationList = ({ storage }) => {
       <DetailsModal
         selectedRegistration={selectedRegistration}
         key="DetailModal"
+        onSaveSuccess={refetch}
       />
       <GuestModal
         selectedRegistration={selectedRegistration}

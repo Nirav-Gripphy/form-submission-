@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { formatDate, formatDateTime } from "../Utility/global";
+import { doc, Timestamp, updateDoc } from "firebase/firestore";
+import { db } from "../services/firebase";
 
 /* ─────────────────────────────────────────────
    Helpers
@@ -685,11 +687,18 @@ const UserAvatar = React.memo(({ photoURL, name, size = 40 }) => {
 /* ─────────────────────────────────────────────
    Main DetailsModal
 ───────────────────────────────────────────── */
-const DetailsModal = ({ selectedRegistration }) => {
+const DetailsModal = ({
+  selectedRegistration,
+  onMarkAsVerified,
+  onSaveSuccess,
+}) => {
   const [ticketPreview, setTicketPreview] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     setTicketPreview(null);
+    setShowConfirm(false);
   }, [selectedRegistration?.id]);
 
   const closeTicketPreview = useCallback(() => setTicketPreview(null), []);
@@ -711,6 +720,24 @@ const DetailsModal = ({ selectedRegistration }) => {
     return trainName;
   };
 
+  const handleMarkAsVerified = async () => {
+    try {
+      setIsVerifying(true);
+      await updateDoc(doc(db, "registration-2026", selectedRegistration.id), {
+        markAsVerified: true,
+        updatedAt: Timestamp.now(),
+      });
+      setShowConfirm(false);
+      const modalElement = document.getElementById("close_details_modal");
+      if (modalElement) modalElement.click();
+      if (onSaveSuccess) onSaveSuccess();
+    } catch (error) {
+      console.error("Failed to mark as verified:", error);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   const ticketItems = [
     {
       key: "arrival",
@@ -727,6 +754,12 @@ const DetailsModal = ({ selectedRegistration }) => {
       show: !!selectedRegistration?.departureTicketURL,
     },
   ].filter((item) => item.show);
+
+  const showVerifySection =
+    selectedRegistration?.registrationStep === 4 &&
+    (selectedRegistration?.markAsVerified === false ||
+      selectedRegistration?.markAsVerified === undefined);
+
 
   return (
     <>
@@ -745,6 +778,7 @@ const DetailsModal = ({ selectedRegistration }) => {
               </h5>
               <button
                 type="button"
+                id="close_details_modal"
                 className="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Close modal"
@@ -753,234 +787,322 @@ const DetailsModal = ({ selectedRegistration }) => {
 
             <div className="modal-body">
               {selectedRegistration && (
-                <div className="row g-4">
-                  {/* ── Left column ── */}
-                  <div className="col-md-6">
-                    <div className="d-flex align-items-center mb-4">
-                      <UserAvatar
-                        photoURL={selectedRegistration.photoURL}
-                        name={selectedRegistration.name}
-                        size={60}
+                <>
+                  {/* ── Verified Banner ── */}
+                  {selectedRegistration?.markAsVerified === true && (
+                    <div className="alert alert-success d-flex align-items-center gap-2 mb-4 py-2 px-3">
+                      <i
+                        className="bi bi-patch-check-fill fs-5"
+                        aria-hidden="true"
                       />
-                      <div className="ms-3">
-                        <h5 className="mb-1">{selectedRegistration.name}</h5>
-                        <p className="text-muted mb-0">
-                          <i
-                            className="bi bi-telephone me-1"
-                            aria-hidden="true"
-                          />
-                          <a
-                            href={`tel:${selectedRegistration.phoneNumber}`}
-                            className="text-decoration-none"
-                          >
-                            {selectedRegistration.phoneNumber}
-                          </a>
-                        </p>
+                      <div>
+                        <span className="fw-semibold">Verified</span>
+                        <span className="text-success-emphasis ms-1 small">
+                          — This registration has been marked as verified.
+                        </span>
                       </div>
                     </div>
+                  )}
 
-                    {selectedRegistration.hasHusband && (
-                      <div className="border-top pt-3 mb-4">
-                        <h6 className="mb-2">Husband Details:</h6>
-                        <div className="d-flex align-items-center">
-                          <UserAvatar
-                            photoURL={selectedRegistration.husbandPhotoURL}
-                            name={selectedRegistration.husbandName}
-                            size={50}
-                          />
-                          <div className="ms-3">
-                            <p className="fw-medium mb-1">
-                              {selectedRegistration.husbandName}
-                            </p>
-                            <small className="text-muted font-monospace">
-                              ID: {selectedRegistration.spouseBarcodeId}
-                            </small>
-                          </div>
+                  <div className="row g-4">
+                    {/* ── Left column ── */}
+                    <div className="col-md-6">
+                      <div className="d-flex align-items-center mb-4">
+                        <UserAvatar
+                          photoURL={selectedRegistration.photoURL}
+                          name={selectedRegistration.name}
+                          size={60}
+                        />
+                        <div className="ms-3">
+                          <h5 className="mb-1">{selectedRegistration.name}</h5>
+                          <p className="text-muted mb-0">
+                            <i
+                              className="bi bi-telephone me-1"
+                              aria-hidden="true"
+                            />
+                            <a
+                              href={`tel:${selectedRegistration.phoneNumber}`}
+                              className="text-decoration-none"
+                            >
+                              {selectedRegistration.phoneNumber}
+                            </a>
+                          </p>
                         </div>
                       </div>
-                    )}
 
-                    <div className="border-top pt-3">
-                      <h6 className="mb-3">
-                        Additional People (
-                        {selectedRegistration.additionalPeople?.length || 0}):
-                      </h6>
-                      {selectedRegistration.additionalPeople?.length > 0 ? (
-                        <div className="row g-2">
-                          {selectedRegistration.additionalPeople.map(
-                            (person, index) => (
-                              <div key={person.id || index} className="col-12">
-                                <div className="card card-body py-2">
-                                  <div className="d-flex justify-content-between align-items-center">
-                                    <div>
-                                      <div className="fw-medium">
-                                        {person.name}
-                                      </div>
-                                      <small className="text-muted">
-                                        {person.relation}
-                                      </small>
-                                    </div>
-                                    <span className="badge bg-secondary">
-                                      #{index + 1}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-center py-3 text-muted">
-                          <i
-                            className="bi bi-people display-6"
-                            aria-hidden="true"
-                          />
-                          <p className="mt-2 mb-0">No additional people</p>
+                      {selectedRegistration.hasHusband && (
+                        <div className="border-top pt-3 mb-4">
+                          <h6 className="mb-2">Husband Details:</h6>
+                          <div className="d-flex align-items-center">
+                            <UserAvatar
+                              photoURL={selectedRegistration.husbandPhotoURL}
+                              name={selectedRegistration.husbandName}
+                              size={50}
+                            />
+                            <div className="ms-3">
+                              <p className="fw-medium mb-1">
+                                {selectedRegistration.husbandName}
+                              </p>
+                              <small className="text-muted font-monospace">
+                                ID: {selectedRegistration.spouseBarcodeId}
+                              </small>
+                            </div>
+                          </div>
                         </div>
                       )}
-                    </div>
-                  </div>
 
-                  {/* ── Right column ── */}
-                  <div className="col-md-6">
-                    <div className="mb-4">
-                      <h6 className="mb-2">
-                        <i className="bi bi-geo-alt me-1" aria-hidden="true" />
-                        Address:
-                      </h6>
-                      <address className="mb-0">
-                        {selectedRegistration.city},{" "}
-                        {selectedRegistration.state}
-                      </address>
-                    </div>
-
-                    <div className="mb-4">
-                      <h6 className="mb-2">
-                        <i className="bi bi-calendar me-1" aria-hidden="true" />
-                        Travel Details:
-                      </h6>
-                      <div className="small">
-                        <div className="row g-2">
-                          <div className="col-6">
-                            <strong>Arrival:</strong>
-                            <br />
-                            {formatDate(selectedRegistration.arrivalDate)}
-                            <br />
-                            <small className="text-muted">
-                              {selectedRegistration.arrivalTime}
-                            </small>
-                            <br />
-                            <small className="text-muted">
-                              via {selectedRegistration.arrivalTravelMode}
-                            </small>
+                      <div className="border-top pt-3">
+                        <h6 className="mb-3">
+                          Additional People (
+                          {selectedRegistration.additionalPeople?.length || 0}):
+                        </h6>
+                        {selectedRegistration.additionalPeople?.length > 0 ? (
+                          <div className="row g-2">
+                            {selectedRegistration.additionalPeople.map(
+                              (person, index) => (
+                                <div
+                                  key={person.id || index}
+                                  className="col-12"
+                                >
+                                  <div className="card card-body py-2">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                      <div>
+                                        <div className="fw-medium">
+                                          {person.name}
+                                        </div>
+                                        <small className="text-muted">
+                                          {person.relation}
+                                        </small>
+                                      </div>
+                                      <span className="badge bg-secondary">
+                                        #{index + 1}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ),
+                            )}
                           </div>
-                          <div className="col-6">
-                            <strong>Departure:</strong>
-                            <br />
-                            {formatDate(selectedRegistration.departureDate)}
-                            <br />
-                            <small className="text-muted">
-                              {selectedRegistration.departureTime}
-                            </small>
-                            <br />
-                            <small className="text-muted">
-                              via {selectedRegistration.departureTravelMode}
-                            </small>
+                        ) : (
+                          <div className="text-center py-3 text-muted">
+                            <i
+                              className="bi bi-people display-6"
+                              aria-hidden="true"
+                            />
+                            <p className="mt-2 mb-0">No additional people</p>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* ── Ticket links ── */}
-                    {ticketItems.length > 0 && (
+                    {/* ── Right column ── */}
+                    <div className="col-md-6">
                       <div className="mb-4">
                         <h6 className="mb-2">
                           <i
-                            className="bi bi-ticket-perforated me-1"
+                            className="bi bi-geo-alt me-1"
                             aria-hidden="true"
                           />
-                          Uploaded Tickets:
+                          Address:
                         </h6>
-                        <div className="d-flex flex-column gap-1">
-                          {ticketItems.map((ticket) => (
-                            <button
-                              key={ticket.key}
-                              type="button"
-                              className="btn btn-link btn-sm p-0 text-start text-decoration-none d-flex align-items-center gap-2"
-                              style={{ width: "fit-content" }}
-                              onClick={() =>
-                                openTicketPreview(
-                                  ticket.url,
-                                  ticket.label,
-                                  ticket.fileName,
-                                )
-                              }
-                              aria-label={`Preview ${ticket.label}`}
-                            >
-                              <i
-                                className={`bi ${
-                                  isPdfTicket(ticket.url, ticket.fileName)
-                                    ? "bi-file-earmark-pdf text-danger"
-                                    : "bi-image text-primary"
-                                }`}
-                              />
-                              <span>{ticket.label}</span>
-                              <i
-                                className="bi bi-eye text-muted"
-                                style={{ fontSize: "0.75rem" }}
-                              />
-                            </button>
-                          ))}
+                        <address className="mb-0">
+                          {selectedRegistration.city},{" "}
+                          {selectedRegistration.state}
+                        </address>
+                      </div>
+
+                      <div className="mb-4">
+                        <h6 className="mb-2">
+                          <i
+                            className="bi bi-calendar me-1"
+                            aria-hidden="true"
+                          />
+                          Travel Details:
+                        </h6>
+                        <div className="small">
+                          <div className="row g-2">
+                            <div className="col-6">
+                              <strong>Arrival:</strong>
+                              <br />
+                              {formatDate(selectedRegistration.arrivalDate)}
+                              <br />
+                              <small className="text-muted">
+                                {selectedRegistration.arrivalTime}
+                              </small>
+                              <br />
+                              <small className="text-muted">
+                                via {selectedRegistration.arrivalTravelMode}
+                              </small>
+                            </div>
+                            <div className="col-6">
+                              <strong>Departure:</strong>
+                              <br />
+                              {formatDate(selectedRegistration.departureDate)}
+                              <br />
+                              <small className="text-muted">
+                                {selectedRegistration.departureTime}
+                              </small>
+                              <br />
+                              <small className="text-muted">
+                                via {selectedRegistration.departureTravelMode}
+                              </small>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    )}
 
-                    {/* Registration meta */}
-                    <div>
-                      <h6 className="mb-2">Registration Details:</h6>
-                      <div className="small">
-                        {selectedRegistration.arrivalTravelMode === "Train" &&
-                          selectedRegistration.arrivalTrainName && (
-                            <p className="mb-1">
-                              <strong>Arrival Train:</strong>{" "}
-                              {formatTrainName(
-                                selectedRegistration.arrivalTrainName,
-                                selectedRegistration.arrivalTrainNameOther,
-                              )}
-                            </p>
-                          )}
-                        {selectedRegistration.departureTravelMode === "Train" &&
-                          selectedRegistration.departureTrainName && (
-                            <p className="mb-1">
-                              <strong>Departure Train:</strong>{" "}
-                              {formatTrainName(
-                                selectedRegistration.departureTrainName,
-                                selectedRegistration.departureTrainNameOther,
-                              )}
-                            </p>
-                          )}
-                        <p className="mb-1">
-                          <strong>Barcode ID:</strong>
-                          <span className="font-monospace ms-1">
-                            {selectedRegistration.primaryBarcodeId}
-                          </span>
-                        </p>
-                        <p className="mb-1">
-                          <strong>Total Attendees:</strong>{" "}
-                          {selectedRegistration.attendeeCount}
-                        </p>
-                        <p className="mb-0">
-                          <strong>Registration Date:</strong>{" "}
-                          {formatDateTime(
-                            selectedRegistration.registrationDate,
-                          )}
-                        </p>
+                      {ticketItems.length > 0 && (
+                        <div className="mb-4">
+                          <h6 className="mb-2">
+                            <i
+                              className="bi bi-ticket-perforated me-1"
+                              aria-hidden="true"
+                            />
+                            Uploaded Tickets:
+                          </h6>
+                          <div className="d-flex flex-column gap-1">
+                            {ticketItems.map((ticket) => (
+                              <button
+                                key={ticket.key}
+                                type="button"
+                                className="btn btn-link btn-sm p-0 text-start text-decoration-none d-flex align-items-center gap-2"
+                                style={{ width: "fit-content" }}
+                                onClick={() =>
+                                  openTicketPreview(
+                                    ticket.url,
+                                    ticket.label,
+                                    ticket.fileName,
+                                  )
+                                }
+                                aria-label={`Preview ${ticket.label}`}
+                              >
+                                <i
+                                  className={`bi ${
+                                    isPdfTicket(ticket.url, ticket.fileName)
+                                      ? "bi-file-earmark-pdf text-danger"
+                                      : "bi-image text-primary"
+                                  }`}
+                                />
+                                <span>{ticket.label}</span>
+                                <i
+                                  className="bi bi-eye text-muted"
+                                  style={{ fontSize: "0.75rem" }}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <h6 className="mb-2">Registration Details:</h6>
+                        <div className="small">
+                          {selectedRegistration.arrivalTravelMode === "Train" &&
+                            selectedRegistration.arrivalTrainName && (
+                              <p className="mb-1">
+                                <strong>Arrival Train:</strong>{" "}
+                                {formatTrainName(
+                                  selectedRegistration.arrivalTrainName,
+                                  selectedRegistration.arrivalTrainNameOther,
+                                )}
+                              </p>
+                            )}
+                          {selectedRegistration.departureTravelMode ===
+                            "Train" &&
+                            selectedRegistration.departureTrainName && (
+                              <p className="mb-1">
+                                <strong>Departure Train:</strong>{" "}
+                                {formatTrainName(
+                                  selectedRegistration.departureTrainName,
+                                  selectedRegistration.departureTrainNameOther,
+                                )}
+                              </p>
+                            )}
+                          <p className="mb-1">
+                            <strong>Barcode ID:</strong>
+                            <span className="font-monospace ms-1">
+                              {selectedRegistration.primaryBarcodeId}
+                            </span>
+                          </p>
+                          <p className="mb-1">
+                            <strong>Total Attendees:</strong>{" "}
+                            {selectedRegistration.attendeeCount}
+                          </p>
+                          <p className="mb-0">
+                            <strong>Registration Date:</strong>{" "}
+                            {formatDateTime(
+                              selectedRegistration.registrationDate,
+                            )}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
+
+            {/* ── Mark as Verified Footer ── */}
+            {showVerifySection && (
+              <div className="modal-footer justify-content-between align-items-center bg-warning-subtle border-top border-warning-subtle">
+                <div className="d-flex align-items-center gap-2 text-warning-emphasis">
+                  <i
+                    className="bi bi-exclamation-circle-fill"
+                    aria-hidden="true"
+                  />
+                  <span className="small fw-medium">
+                    This registration is pending verification.
+                  </span>
+                </div>
+
+                {!showConfirm ? (
+                  <button
+                    type="button"
+                    className="btn btn-success btn-sm px-3"
+                    onClick={() => setShowConfirm(true)}
+                  >
+                    <i className="bi bi-check2-circle me-1" />
+                    Mark as Verified
+                  </button>
+                ) : (
+                  <div className="d-flex align-items-center gap-2">
+                    <span className="small fw-medium text-dark">
+                      Are you sure?
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-success btn-sm px-3"
+                      onClick={handleMarkAsVerified}
+                      disabled={isVerifying}
+                    >
+                      {isVerifying ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-1"
+                            role="status"
+                            aria-hidden="true"
+                          />
+                          Saving…
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-check-lg me-1" />
+                          Yes, Confirm
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => setShowConfirm(false)}
+                      disabled={isVerifying}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
