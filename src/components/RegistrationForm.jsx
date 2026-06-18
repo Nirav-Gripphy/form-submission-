@@ -28,7 +28,7 @@ import {
 
 const RegistrationForm = ({ db, storage }) => {
   // Registration closing date - Today at 12:00 PM IST for testing
-  const REGISTRATION_CLOSE_DATE = new Date("2026-06-15");
+  const REGISTRATION_CLOSE_DATE = new Date("2026-07-15");
   REGISTRATION_CLOSE_DATE.setHours(23, 59, 0, 0); // Set to 12:00 PM today
 
   const [step, setStep] = useState(0);
@@ -243,6 +243,7 @@ const RegistrationForm = ({ db, storage }) => {
           updatedAt: new Date(),
           registrationStep: step,
           isDeleted: false,
+          markAsVerified: false,
         };
 
         if (registrationId) {

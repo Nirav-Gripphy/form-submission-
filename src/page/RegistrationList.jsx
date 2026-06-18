@@ -143,7 +143,8 @@ const useFilters = (registrations, searchTerm, filters, showDeleted) =>
     }
     if (filters.status) {
       result = result.filter((r) => {
-        if (filters.status === "completed") return r.registrationStep === 4;
+        if (filters.status === "completed")
+          return r.registrationStep === 4 && !r.markAsVerified;
         if (filters.status === "verified") return r.markAsVerified === true;
         if (filters.status === "pending") return r.registrationStep !== 4;
         return true;
@@ -945,7 +946,9 @@ const StatusBadge = ({ step, isDeleted, markAsVerified }) => {
     ? markAsVerified
       ? "Verified"
       : "Completed"
-    : "Pending";
+    : markAsVerified
+      ? "Verified"
+      : "Pending";
   return (
     <span
       className={`badge ${
@@ -953,14 +956,18 @@ const StatusBadge = ({ step, isDeleted, markAsVerified }) => {
           ? markAsVerified
             ? "bg-purple text-white" // or "text-bg-info" / inline style
             : "bg-success"
-          : "bg-warning text-dark"
+          : markAsVerified
+            ? "bg-purple text-white"
+            : "bg-warning text-dark"
       } d-inline-flex align-items-center gap-1`}
       style={
-        markAsVerified && isCompleted ? { backgroundColor: "#6f42c1" } : {}
+        (markAsVerified && isCompleted) || markAsVerified
+          ? { backgroundColor: "#6f42c1" }
+          : {}
       }
     >
       <i
-        className={`bi ${isCompleted ? "bi-check-circle-fill" : "bi-clock-fill"}`}
+        className={`bi ${isCompleted || markAsVerified ? "bi-check-circle-fill" : "bi-clock-fill"}`}
       ></i>
       {statusText}
     </span>

@@ -755,11 +755,124 @@ const DetailsModal = ({
     },
   ].filter((item) => item.show);
 
-  const showVerifySection =
-    selectedRegistration?.registrationStep === 4 &&
-    (selectedRegistration?.markAsVerified === false ||
-      selectedRegistration?.markAsVerified === undefined);
+  const requiredFields = [
+    {
+      key: "name",
+      label: "Full Name",
+      icon: "bi-person",
+      value: selectedRegistration?.name,
+    },
+    {
+      key: "phoneNumber",
+      label: "Phone Number",
+      icon: "bi-telephone",
+      value: selectedRegistration?.phoneNumber,
+    },
+    {
+      key: "city",
+      label: "City",
+      icon: "bi-geo-alt",
+      value: selectedRegistration?.city,
+    },
+    {
+      key: "state",
+      label: "State",
+      icon: "bi-geo-alt",
+      value: selectedRegistration?.state,
+    },
+    {
+      key: "arrivalDate",
+      label: "Arrival Date",
+      icon: "bi-calendar-event",
+      value: selectedRegistration?.arrivalDate,
+    },
+    {
+      key: "arrivalTime",
+      label: "Arrival Time",
+      icon: "bi-clock",
+      value: selectedRegistration?.arrivalTime,
+    },
+    {
+      key: "arrivalTravelMode",
+      label: "Arrival Travel Mode",
+      icon: "bi-train-front",
+      value: selectedRegistration?.arrivalTravelMode,
+    },
+    {
+      key: "arrivalTicketURL",
+      label: "Arrival Ticket",
+      icon: "bi-ticket-perforated",
+      value:
+        selectedRegistration?.hasArrivalTicket === true
+          ? selectedRegistration?.arrivalTicketURL
+          : "N/A", // not required if hasArrivalTicket is false
+    },
+    {
+      key: "departureDate",
+      label: "Departure Date",
+      icon: "bi-calendar-event",
+      value: selectedRegistration?.departureDate,
+    },
+    {
+      key: "departureTime",
+      label: "Departure Time",
+      icon: "bi-clock",
+      value: selectedRegistration?.departureTime,
+    },
+    {
+      key: "departureTravelMode",
+      label: "Departure Travel Mode",
+      icon: "bi-train-front",
+      value: selectedRegistration?.departureTravelMode,
+    },
+    {
+      key: "departureTicketURL",
+      label: "Departure Ticket",
+      icon: "bi-ticket-perforated",
+      value:
+        selectedRegistration?.hasDepartureTicket === true
+          ? selectedRegistration?.departureTicketURL
+          : "N/A",
+    },
+    {
+      key: "paymentStatus",
+      label: "Payment",
+      icon: "bi-credit-card",
+      value: selectedRegistration?.paymentStatus,
+    },
+    {
+      key: "primaryBarcodeId",
+      label: "Barcode ID",
+      icon: "bi-upc-scan",
+      value: selectedRegistration?.primaryBarcodeId,
+    },
+    // {
+    //   key: "registrationStep",
+    //   label: "Registration Complete",
+    //   icon: "bi-check2-all",
+    //   // step 4 = fully complete
+    //   value:
+    //     selectedRegistration?.registrationStep === 4
+    //       ? "complete"
+    //       : null,
+    // },
+  ];
 
+  const pendingFields = requiredFields.filter(
+    (f) =>
+      f.value === null ||
+      f.value === undefined ||
+      f.value === "" ||
+      f.value === false,
+  );
+
+  const showVerifySection =
+    (selectedRegistration?.registrationStep === 4 &&
+      (selectedRegistration?.markAsVerified === false ||
+        selectedRegistration?.markAsVerified === undefined)) ||
+    (pendingFields.length === 0 &&
+      (selectedRegistration?.markAsVerified === false ||
+        selectedRegistration?.markAsVerified === undefined));
 
   return (
     <>
@@ -805,6 +918,53 @@ const DetailsModal = ({
                   )}
 
                   <div className="row g-4">
+                    {/* ── Pending Details Section ── */}
+
+                    {pendingFields.length > 0 && (
+                      <div className="alert alert-warning border-warning-subtle p-0 overflow-hidden mb-4">
+                        <div className="d-flex align-items-center gap-2 px-3 py-2 bg-warning-subtle border-bottom border-warning-subtle">
+                          <i
+                            className="bi bi-exclamation-triangle-fill text-warning"
+                            aria-hidden="true"
+                          />
+                          <span className="fw-semibold small text-warning-emphasis">
+                            Pending Details
+                          </span>
+                          <span
+                            className="badge rounded-pill ms-auto"
+                            style={{
+                              background: "#ffc107",
+                              color: "#5a3e00",
+                              fontSize: "0.65rem",
+                            }}
+                          >
+                            {pendingFields.length} missing
+                          </span>
+                        </div>
+                        <div className="px-3 py-2">
+                          <div className="row g-1">
+                            {pendingFields.map((field) => (
+                              <div key={field.key} className="col-6">
+                                <div className="d-flex align-items-center gap-2 py-1">
+                                  <i
+                                    className={`bi ${field.icon} text-warning-emphasis`}
+                                    style={{
+                                      fontSize: "0.8rem",
+                                      flexShrink: 0,
+                                    }}
+                                    aria-hidden="true"
+                                  />
+                                  <span className="small text-warning-emphasis">
+                                    {field.label}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* ── Left column ── */}
                     <div className="col-md-6">
                       <div className="d-flex align-items-center mb-4">
