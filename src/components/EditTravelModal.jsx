@@ -59,20 +59,6 @@ const DEPARTURE_DATES = [
 ];
 
 // ─── Ticket Upload Widget ─────────────────────────────────────────────────────
-/**
- * Props:
- *  inputId        – unique id for <input type="file">
- *  ticketFile     – current File object (new, not yet uploaded)
- *  ticketPreview  – data-URL / existing URL / "pdf"
- *  ticketType     – MIME type string
- *  isDragging     – bool
- *  error          – string | null
- *  disabled       – bool
- *  onFileChange   – (file) => void
- *  onRemove       – () => void
- *  onDragStart    – () => void
- *  onDragEnd      – () => void
- */
 const TicketUpload = React.memo(
   ({
     inputId,
@@ -200,7 +186,6 @@ function useTicketState(existingURL = "") {
   const [removeExisting, setRemoveExisting] = useState(false);
   const [fileError, setFileError] = useState(null);
 
-  // Reset when existingURL changes (e.g. modal opened for a different registration)
   useEffect(() => {
     const isPdf2 = existingURL.toLowerCase().includes(".pdf");
     setFile(null);
@@ -258,23 +243,6 @@ function useTicketState(existingURL = "") {
 }
 
 // ─── EditTravelModal ──────────────────────────────────────────────────────────
-/**
- * Drop-in replacement for the existing EditTravelModal in RegistrationList.
- *
- * New onSave signature:
- *   onSave({
- *     arrivalTravelMode, arrivalTrainName, arrivalDate,
- *     arrivalTrainNameOther,
- *     departureTravelMode, departureTrainName, departureDate,
- *     departureTrainNameOther,
- *     // ticket files (File | null)
- *     arrivalTicketFile, removeArrivalTicket,
- *     departureTicketFile, removeDepartureTicket,
- *   })
- *
- * The CALLER (RegistrationList) is responsible for uploading files to Storage
- * exactly as it does in nextStep() — this modal just surfaces the files.
- */
 const EditTravelModal = React.memo(
   ({ registration, onSave, onCancel, isSaving }) => {
     /* ── form state ── */
@@ -283,10 +251,12 @@ const EditTravelModal = React.memo(
       arrivalTrainName: "",
       arrivalTrainNameOther: "",
       arrivalDate: "",
+      arrivalTime: "",
       departureTravelMode: "",
       departureTrainName: "",
       departureTrainNameOther: "",
       departureDate: "",
+      departureTime: "",
     });
     const [errors, setErrors] = useState({});
 
@@ -308,12 +278,14 @@ const EditTravelModal = React.memo(
           : (registration.arrivalTrainName ?? ""),
         arrivalTrainNameOther: registration.arrivalTrainNameOther ?? "",
         arrivalDate: registration.arrivalDate ?? "",
+        arrivalTime: registration.arrivalTime ?? "",
         departureTravelMode: registration.departureTravelMode ?? "",
         departureTrainName: hasOtherDeparture
           ? "__other__"
           : (registration.departureTrainName ?? ""),
         departureTrainNameOther: registration.departureTrainNameOther ?? "",
         departureDate: registration.departureDate ?? "",
+        departureTime: registration.departureTime ?? "",
       });
       setErrors({});
     }, [registration]);
@@ -341,6 +313,7 @@ const EditTravelModal = React.memo(
       const e = {};
       if (!form.arrivalTravelMode) e.arrivalTravelMode = "Required";
       if (!form.arrivalDate) e.arrivalDate = "Required";
+      if (!form.arrivalTime) e.arrivalTime = "Required";
       if (form.arrivalTravelMode === "Train" && !form.arrivalTrainName)
         e.arrivalTrainName = "Select a train";
       if (
@@ -350,12 +323,9 @@ const EditTravelModal = React.memo(
       )
         e.arrivalTrainName = "Enter train name";
 
-      // const arrivalNeedsTicket = form.arrivalTravelMode === "Train" || form.arrivalTravelMode === "Flight";
-      // if (arrivalNeedsTicket && !arrivalTicket.file && !arrivalTicket.preview)
-      //   e.arrivalTicket = "Ticket is required";
-
       if (!form.departureTravelMode) e.departureTravelMode = "Required";
       if (!form.departureDate) e.departureDate = "Required";
+      if (!form.departureTime) e.departureTime = "Required";
       if (form.departureTravelMode === "Train" && !form.departureTrainName)
         e.departureTrainName = "Select a train";
       if (
@@ -364,10 +334,6 @@ const EditTravelModal = React.memo(
         !form.departureTrainNameOther.trim()
       )
         e.departureTrainName = "Enter train name";
-
-      // const departureNeedsTicket = form.departureTravelMode === "Train" || form.departureTravelMode === "Flight";
-      // if (departureNeedsTicket && !departureTicket.file && !departureTicket.preview)
-      //   e.departureTicket = "Ticket is required";
 
       setErrors(e);
       return Object.keys(e).length === 0;
@@ -395,6 +361,7 @@ const EditTravelModal = React.memo(
             ? form.arrivalTrainNameOther.trim()
             : "",
         arrivalDate: form.arrivalDate,
+        arrivalTime: form.arrivalTime,
         departureTravelMode: form.departureTravelMode,
         departureTrainName:
           form.departureTravelMode === "Train"
@@ -408,6 +375,7 @@ const EditTravelModal = React.memo(
             ? form.departureTrainNameOther.trim()
             : "",
         departureDate: form.departureDate,
+        departureTime: form.departureTime,
         // ticket payloads
         arrivalTicketFile: arrivalNeedsTicket ? arrivalTicket.file : null,
         removeArrivalTicket: arrivalNeedsTicket
@@ -572,29 +540,45 @@ const EditTravelModal = React.memo(
                 </div>
               )}
 
-              {/* Arrival date */}
-              <div className="mb-3">
-                <label className="form-label small fw-medium mb-1">
-                  Arrival Date <span className="text-danger">*</span>
-                </label>
-                <div className="d-flex gap-2 flex-wrap">
-                  {ARRIVAL_DATES.map((d) => (
-                    <button
-                      key={d.value}
-                      type="button"
-                      className={`btn btn-sm d-flex align-items-center gap-1 ${form.arrivalDate === d.value ? "btn-primary" : "btn-outline-secondary"}`}
-                      onClick={() => set("arrivalDate", d.value)}
-                    >
-                      <i className="bi bi-calendar2-event"></i>
-                      {d.label}
-                    </button>
-                  ))}
-                </div>
-                {errors.arrivalDate && (
-                  <div className="text-danger small mt-1">
-                    {errors.arrivalDate}
+              {/* Arrival date + time — side by side */}
+              <div className="row g-2 mb-3">
+                <div className="col-12 col-sm-7">
+                  <label className="form-label small fw-medium mb-1">
+                    Arrival Date <span className="text-danger">*</span>
+                  </label>
+                  <div className="d-flex gap-2 flex-wrap">
+                    {ARRIVAL_DATES.map((d) => (
+                      <button
+                        key={d.value}
+                        type="button"
+                        className={`btn btn-sm d-flex align-items-center gap-1 ${form.arrivalDate === d.value ? "btn-primary" : "btn-outline-secondary"}`}
+                        onClick={() => set("arrivalDate", d.value)}
+                      >
+                        <i className="bi bi-calendar2-event"></i>
+                        {d.label}
+                      </button>
+                    ))}
                   </div>
-                )}
+                  {errors.arrivalDate && (
+                    <div className="text-danger small mt-1">
+                      {errors.arrivalDate}
+                    </div>
+                  )}
+                </div>
+                <div className="col-12 col-sm-5">
+                  <label className="form-label small fw-medium mb-1">
+                    Arrival Time <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    className={`form-control form-control-sm ${errors.arrivalTime ? "is-invalid" : ""}`}
+                    value={form.arrivalTime}
+                    onChange={(e) => set("arrivalTime", e.target.value)}
+                  />
+                  {errors.arrivalTime && (
+                    <div className="invalid-feedback">{errors.arrivalTime}</div>
+                  )}
+                </div>
               </div>
 
               {/* Arrival ticket upload */}
@@ -624,7 +608,6 @@ const EditTravelModal = React.memo(
                       {errors.arrivalTicket || arrivalTicket.fileError}
                     </div>
                   )}
-                  {/* View existing ticket link */}
                   {!arrivalTicket.file &&
                     !arrivalTicket.removeExisting &&
                     registration.arrivalTicketURL && (
@@ -721,29 +704,47 @@ const EditTravelModal = React.memo(
                 </div>
               )}
 
-              {/* Departure date */}
-              <div className="mb-3">
-                <label className="form-label small fw-medium mb-1">
-                  Departure Date <span className="text-danger">*</span>
-                </label>
-                <div className="d-flex gap-2 flex-wrap">
-                  {DEPARTURE_DATES.map((d) => (
-                    <button
-                      key={d.value}
-                      type="button"
-                      className={`btn btn-sm d-flex align-items-center gap-1 ${form.departureDate === d.value ? "btn-warning" : "btn-outline-secondary"}`}
-                      onClick={() => set("departureDate", d.value)}
-                    >
-                      <i className="bi bi-calendar2-event"></i>
-                      {d.label}
-                    </button>
-                  ))}
-                </div>
-                {errors.departureDate && (
-                  <div className="text-danger small mt-1">
-                    {errors.departureDate}
+              {/* Departure date + time — side by side */}
+              <div className="row g-2 mb-3">
+                <div className="col-12 col-sm-7">
+                  <label className="form-label small fw-medium mb-1">
+                    Departure Date <span className="text-danger">*</span>
+                  </label>
+                  <div className="d-flex gap-2 flex-wrap">
+                    {DEPARTURE_DATES.map((d) => (
+                      <button
+                        key={d.value}
+                        type="button"
+                        className={`btn btn-sm d-flex align-items-center gap-1 ${form.departureDate === d.value ? "btn-warning" : "btn-outline-secondary"}`}
+                        onClick={() => set("departureDate", d.value)}
+                      >
+                        <i className="bi bi-calendar2-event"></i>
+                        {d.label}
+                      </button>
+                    ))}
                   </div>
-                )}
+                  {errors.departureDate && (
+                    <div className="text-danger small mt-1">
+                      {errors.departureDate}
+                    </div>
+                  )}
+                </div>
+                <div className="col-12 col-sm-5">
+                  <label className="form-label small fw-medium mb-1">
+                    Departure Time <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    className={`form-control form-control-sm ${errors.departureTime ? "is-invalid" : ""}`}
+                    value={form.departureTime}
+                    onChange={(e) => set("departureTime", e.target.value)}
+                  />
+                  {errors.departureTime && (
+                    <div className="invalid-feedback">
+                      {errors.departureTime}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Departure ticket upload */}
@@ -773,7 +774,6 @@ const EditTravelModal = React.memo(
                       {errors.departureTicket || departureTicket.fileError}
                     </div>
                   )}
-                  {/* View existing ticket link */}
                   {!departureTicket.file &&
                     !departureTicket.removeExisting &&
                     registration.departureTicketURL && (

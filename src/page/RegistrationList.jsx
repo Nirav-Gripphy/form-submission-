@@ -1119,6 +1119,8 @@ const RegistrationList = ({ storage }) => {
         const id = travelEditTarget.id;
         const update = {
           arrivalTravelMode: formData.arrivalTravelMode,
+          arrivalTime: formData?.arrivalTime ?? "",
+          departureTime: formData?.departureTime ?? "",
           arrivalTrainName:
             formData.arrivalTravelMode === "Train"
               ? formData.arrivalTrainName
@@ -1138,6 +1140,7 @@ const RegistrationList = ({ storage }) => {
               ? (formData.departureTrainNameOther ?? "")
               : "",
           departureDate: formData.departureDate,
+
           updatedAt: serverTimestamp(),
         };
 
