@@ -146,7 +146,8 @@ const useFilters = (registrations, searchTerm, filters, showDeleted) =>
         if (filters.status === "completed")
           return r.registrationStep === 4 && !r.markAsVerified;
         if (filters.status === "verified") return r.markAsVerified === true;
-        if (filters.status === "pending") return r.registrationStep !== 4;
+        if (filters.status === "pending")
+          return r.registrationStep !== 4 && !r.markAsVerified;
         return true;
       });
     }
