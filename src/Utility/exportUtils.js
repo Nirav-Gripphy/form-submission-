@@ -132,11 +132,13 @@ export const exportToExcelWithExcelJS = async (
       const rowIndex = i + 2; // Excel is 1-indexed, +1 for header
 
       const isCompleted = registration.registrationStep === 4;
-      const statusText = isCompleted
-        ? registration.markAsVerified === true
-          ? "Verified"
-          : "Completed"
-        : "Pending";
+      const statusText = registration.markAsVerified
+        ? "Verified"
+        : isCompleted
+          ? registration.markAsVerified === true
+            ? "Verified"
+            : "Completed"
+          : "Pending";
       // Add row data
       const rowData = [
         registration.registrationId || registration.id,
