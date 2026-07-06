@@ -36,9 +36,9 @@ const generateBarcodeBuffer = (text, width = 300, height = 100) => {
 };
 
 // ExcelJS Implementation
-export const exportToExcelWithExcelJS = async (
+export const  exportToExcelWithExcelJS = async (
   data,
-  filename = "registrations-with-barcodes.xlsx"
+  filename = "registrations-with-barcodes.xlsx",
 ) => {
   if (!data.length) {
     alert("No data to export");
@@ -158,7 +158,7 @@ export const exportToExcelWithExcelJS = async (
         registration.departureDate || "",
         registration.departureTime || "",
         registration.departureTravelMode || "",
-        registration.paymentStatus || "",
+        registration.paymentStatusss || "gysudgsuydgsyudsyudgtyu",
         registration.paymentAmount || "",
         registration.paymentId || "",
         registration.orderId || "",
@@ -172,7 +172,7 @@ export const exportToExcelWithExcelJS = async (
       // Generate and add primary barcode
       if (registration.primaryBarcodeId) {
         const primaryBarcodeBuffer = await generateBarcodeBuffer(
-          registration.primaryBarcodeId
+          registration.primaryBarcodeId,
         );
         if (primaryBarcodeBuffer) {
           const primaryImageId = workbook.addImage({
@@ -190,7 +190,7 @@ export const exportToExcelWithExcelJS = async (
       // Generate and add spouse barcode
       if (registration.spouseBarcodeId) {
         const spouseBarcodeBuffer = await generateBarcodeBuffer(
-          registration.spouseBarcodeId
+          registration.spouseBarcodeId,
         );
         if (spouseBarcodeBuffer) {
           const spouseImageId = workbook.addImage({
@@ -231,103 +231,11 @@ export const exportToExcelWithExcelJS = async (
     alert("Failed to export Excel file. Please try again.");
 
     const loadingAlert = document.querySelector(
-      'div[style*="position: fixed"]'
+      'div[style*="position: fixed"]',
     );
     if (loadingAlert) {
       document.body.removeChild(loadingAlert);
     }
-  }
-};
-
-// SOLUTION 2: Using react-excel-export with canvas images
-// Install: npm install react-excel-export
-
-export const exportToExcelWithReactExcel = async (
-  data,
-  filename = "registrations-with-barcodes.xlsx"
-) => {
-  if (!data.length) {
-    alert("No data to export");
-    return;
-  }
-
-  try {
-    // Dynamic import
-    const { ExcelFile, ExcelSheet } = await import("react-excel-export");
-
-    // Process data with barcode generation
-    const processedData = await Promise.all(
-      data.map(async (registration) => {
-        const primaryBarcode = generateBarcodeImage(
-          registration.primaryBarcodeId || registration.id
-        );
-        const spouseBarcode = registration.spouseBarcodeId
-          ? generateBarcodeImage(registration.spouseBarcodeId)
-          : null;
-
-        return {
-          registrationId: registration.registrationId || registration.id,
-          primaryBarcodeId: registration.primaryBarcodeId || "",
-          name: registration.name || "",
-          phoneNumber: registration.phoneNumber || "",
-          city: registration.city || "",
-          state: registration.state || "",
-          hasHusband: registration.hasHusband ? "Yes" : "No",
-          husbandName: registration.husbandName || "",
-          husbandBarcodeId: registration.spouseBarcodeId || "",
-          additionalPeople:
-            registration?.additionalPeople
-              ?.map((res) => `${res.name} ( ${res.relation} )`)
-              .join(", ") || "",
-          createdAt: registration.createdAt
-            ? formatDateTime(registration.createdAt)
-            : "",
-          updatedAt: registration.updatedAt
-            ? formatDateTime(registration.updatedAt)
-            : "",
-          photoURL: registration.photoURL || "",
-          husbandPhotoURL: registration.husbandPhotoURL || "",
-          arrivalDate: registration.arrivalDate || "",
-          arrivalTime: registration.arrivalTime || "",
-          arrivalTravelMode: registration.arrivalTravelMode || "",
-          departureDate: registration.departureDate || "",
-          departureTime: registration.departureTime || "",
-          departureTravelMode: registration.departureTravelMode || "",
-          paymentStatus: registration.paymentStatus || "",
-          paymentAmount: registration.paymentAmount || "",
-          paymentId: registration.paymentId || "",
-          orderId: registration.orderId || "",
-          primaryBarcode: primaryBarcode || "",
-          spouseBarcode: spouseBarcode || "",
-        };
-      })
-    );
-
-    // Create Excel file component
-    const ExcelComponent = () => (
-      <ExcelFile filename={filename} element={<button>Download</button>}>
-        <ExcelSheet data={processedData} name="Registrations">
-          {/* Define columns */}
-        </ExcelSheet>
-      </ExcelFile>
-    );
-
-    // Trigger download
-    const tempDiv = document.createElement("div");
-    tempDiv.style.visibility = "hidden";
-    document.body.appendChild(tempDiv);
-
-    // Use React to render and trigger download
-    const { createRoot } = await import("react-dom/client");
-    const root = createRoot(tempDiv);
-    root.render(<ExcelComponent />);
-
-    setTimeout(() => {
-      document.body.removeChild(tempDiv);
-    }, 1000);
-  } catch (error) {
-    console.error("Excel Export Failed:", error);
-    alert("Failed to export Excel file. Please try again.");
   }
 };
 
@@ -415,7 +323,7 @@ export const exportToCSV = (data, filename = "registrations-export.csv") => {
             }
             return value;
           })
-          .join(",")
+          .join(","),
       ),
     ].join("\n");
 
