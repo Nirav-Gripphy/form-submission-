@@ -158,11 +158,17 @@ export const exportToExcelWithExcelJS = async (
         registration.arrivalDate || "",
         registration.arrivalTime || "",
         registration.arrivalTravelMode || "",
-        registration.arrivalTrainName || "",
+        (registration.arrivalTrainName =
+          registration.arrivalTravelMode.toLowerCase() === "train"
+            ? registration.arrivalTrainName || ""
+            : ""),
         registration.departureDate || "",
         registration.departureTime || "",
         registration.departureTravelMode || "",
-        registration.departureTrainName || "",
+        (registration.departureTrainName =
+          registration.departureTravelMode.toLowerCase() === "train"
+            ? registration.departureTrainName || ""
+            : ""),
         statusText,
         "", // Placeholder for primary barcode
         "", // Placeholder for spouse barcode
