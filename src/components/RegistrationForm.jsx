@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   collection,
   query,
@@ -8,6 +8,7 @@ import {
   updateDoc,
   doc,
   runTransaction,
+  getDoc,
 } from "firebase/firestore";
 import PhoneInput from "./PhoneInput";
 import PersonalInfo from "./PersonalInfo";
@@ -18,7 +19,6 @@ import PaymentConfirmation from "./PaymentConfirmation";
 import ProgressBar from "./ProgressBar";
 import "../styles/RegistrationForm.css";
 import { NoRegistation } from "./NoRegistation";
-import { clippingParents } from "@popperjs/core";
 import {
   deleteObject,
   getDownloadURL,
@@ -28,8 +28,7 @@ import {
 
 const RegistrationForm = ({ db, storage }) => {
   // Registration closing date - Today at 12:00 PM IST for testing
-  const REGISTRATION_CLOSE_DATE = new Date("2026-06-15");
-  REGISTRATION_CLOSE_DATE.setHours(23, 59, 0, 0); // Set to 12:00 PM today
+  const [registrationCloseDate, setRegistrationCloseDate] = useState();
 
   const [step, setStep] = useState(0);
   const [isRegistrationClosed, setIsRegistrationClosed] = useState(false);
@@ -55,24 +54,51 @@ const RegistrationForm = ({ db, storage }) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [userExists, setUserExists] = useState(false);
+
   const [registrationId, setRegistrationId] = useState(null);
 
+  const getRegistrationCloseDate = useCallback(async () => {
+    try {
+      const registrationCloseDateRef = doc(
+        db,
+        "registartion-date-config",
+        "registrationDate",
+      );
+
+      const snapshot = await getDoc(registrationCloseDateRef);
+      if (snapshot.exists()) {
+        const { registrationEndDate } = snapshot.data();
+        console.log("Registration Close Date:", registrationEndDate.toDate());
+        setRegistrationCloseDate(registrationEndDate.toDate());
+      } else {
+        console.warn("Document does not exist.");
+        setError("Registration date configuration not found.");
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load registration close date. Please try again.");
+    }
+  }, [db]);
+
+  useEffect(() => {
+    getRegistrationCloseDate();
+  }, [getRegistrationCloseDate]);
+
   // Check if registration is closed using IST timezone
-  const checkRegistrationStatus = () => {
+  const checkRegistrationStatus = useCallback(() => {
     // Get current time in IST
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
     const istTime = new Date(now.getTime() + istOffset);
 
     // For testing, we're using today at 12:00 PM
-    const closeTime = new Date(REGISTRATION_CLOSE_DATE);
+    const closeTime = new Date(registrationCloseDate);
 
     // Convert close time to IST for comparison
     const istCloseTime = new Date(closeTime.getTime() + istOffset);
 
     setIsRegistrationClosed(istTime > istCloseTime);
-  };
+  }, [registrationCloseDate]);
 
   // Check registration status on component mount and every second
   useEffect(() => {
@@ -82,7 +108,7 @@ const RegistrationForm = ({ db, storage }) => {
     const interval = setInterval(checkRegistrationStatus, 1000); // Check every second
 
     return () => clearInterval(interval);
-  }, []);
+  }, [checkRegistrationStatus]);
 
   // Check if user exists in Firebase
   const checkUserExists = async (phoneNumber) => {
@@ -119,7 +145,7 @@ const RegistrationForm = ({ db, storage }) => {
         });
 
         setRegistrationId(registrationSnapshot.docs[0].id);
-        setUserExists(true);
+
         setStep(
           regData?.paymentStatus === "pending" ? 1 : regData?.isDeleted ? 1 : 5,
         ); // Step for already registered users
@@ -146,7 +172,6 @@ const RegistrationForm = ({ db, storage }) => {
           husbandName: userData[`Husband's Name`],
         }));
 
-        setUserExists(true);
         setStep(1); // Step for partial users
       } else {
         // Step 3: Not found anywhere — redirect
@@ -437,6 +462,8 @@ const RegistrationForm = ({ db, storage }) => {
       </div>
     );
   };
+
+  if (!registrationCloseDate) return null;
 
   const renderStep = () => {
     // If registration is closed and we're on step 0 (phone input), show closed message

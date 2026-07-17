@@ -72,7 +72,7 @@ const useRegistrations = () => {
       );
       const snapshot = await getDocs(registrationsQuery);
       setRegistrations(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+        snapshot.docs.map((docc) => ({ id: docc.id, ...docc.data() })),
       );
     } catch (err) {
       console.error("Error fetching data:", err);

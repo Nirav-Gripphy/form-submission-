@@ -40,11 +40,16 @@ const ALLOWED_TYPES = [
 
 const TRAVEL_MODES = ["Train", "Flight", "Car"];
 
-const TRAIN_LIST = [
+const TRAIN_LIST_ARRIVAL = [
   "अरावली एक्सप्रेस (14702)",
   "रणकपुर एक्सप्रेस (14708)",
   "भुज-बरेली एक्सप्रेस (14322)",
   "रणथंभौर एक्सप्रेस (12465)",
+];
+const TRAIN_LIST_DEPARTURE = [
+  "यशवंतपुर बीकानेर एक्सप्रेस (16588)",
+  "भुज-बरेली एक्सप्रेस (14321)",
+  "बीकानेर - इंदौर महामना एक्सप्रेस (19334)",
 ];
 
 const ARRIVAL_DATES = [
@@ -514,7 +519,7 @@ const EditTravelModal = React.memo(
                     onChange={(e) => set("arrivalTrainName", e.target.value)}
                   >
                     <option value="">-- Select Train --</option>
-                    {TRAIN_LIST.map((t) => (
+                    {TRAIN_LIST_ARRIVAL.map((t) => (
                       <option key={t} value={t}>
                         {t}
                       </option>
@@ -678,7 +683,7 @@ const EditTravelModal = React.memo(
                     onChange={(e) => set("departureTrainName", e.target.value)}
                   >
                     <option value="">-- Select Train --</option>
-                    {TRAIN_LIST.map((t) => (
+                    {TRAIN_LIST_DEPARTURE.map((t) => (
                       <option key={t} value={t}>
                         {t}
                       </option>
