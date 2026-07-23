@@ -420,6 +420,94 @@ const RestoreConfirmModal = React.memo(
 );
 RestoreConfirmModal.displayName = "RestoreConfirmModal";
 
+// ─── Notes Modal ──────────────────────────────────────────────────────────────
+const NotesModal = React.memo(
+  ({ registration, onSave, onCancel, isSaving }) => {
+    const [notes, setNotes] = useState("");
+
+    useEffect(() => {
+      if (registration) setNotes(registration.notes ?? "");
+    }, [registration]);
+
+    if (!registration) return null;
+
+    const backdropStyle = {
+      position: "fixed",
+      inset: 0,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      zIndex: 1055,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    };
+
+    const dialogStyle = {
+      background: "#fff",
+      borderRadius: 12,
+      padding: "1.75rem",
+      width: "min(600px, 92vw)",
+      boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+    };
+
+    return (
+      <div style={backdropStyle} role="dialog" aria-modal="true">
+        <div style={dialogStyle}>
+          <div className="d-flex align-items-center gap-2 mb-3">
+            <div>
+              <h6 className="mb-0 fw-semibold">Add Notes</h6>
+              <small className="text-muted">{registration.name}</small>
+            </div>
+          </div>
+
+          <label htmlFor="registration-notes" className="form-label small text-muted">
+            Notes
+          </label>
+          <textarea
+            id="registration-notes"
+            className="form-control mb-4"
+            rows={5}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Write notes about this registration…"
+            disabled={isSaving}
+          />
+
+          <div className="d-flex gap-2 justify-content-end">
+            <button
+              className="btn btn-outline-secondary"
+              onClick={onCancel}
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary d-flex align-items-center gap-2"
+              onClick={() => onSave(notes)}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <span
+                    className="spinner-border spinner-border-sm"
+                    role="status"
+                  />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-check-lg"></i>
+                  Save
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  },
+);
+NotesModal.displayName = "NotesModal";
+
 // ─── Filter Offcanvas ─────────────────────────────────────────────────────────
 const FilterOffcanvas = React.memo(
   ({ filters, onChange, onReset, hasActiveFilters, isOpen, onClose }) => {
@@ -842,6 +930,7 @@ const ActionButtons = React.memo(
     onDelete,
     onRestore,
     onEditTravel,
+    onAddNotes,
     showDeleted,
   }) => {
     if (showDeleted) {
@@ -916,6 +1005,15 @@ const ActionButtons = React.memo(
           >
             <path d="M5.621 1.485c1.815-.454 2.943-.454 4.758 0 .784.196 1.743.673 2.527 1.119.688.39 1.094 1.148 1.094 1.979V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V4.583c0-.831.406-1.588 1.094-1.98.784-.445 1.744-.922 2.527-1.118m5-.97C8.647.02 7.353.02 5.38.515c-.924.23-1.982.766-2.78 1.22C1.566 2.322 1 3.432 1 4.582V13.5A2.5 2.5 0 0 0 3.5 16h9a2.5 2.5 0 0 0 2.5-2.5V4.583c0-1.15-.565-2.26-1.6-2.849-.797-.453-1.855-.988-2.779-1.22ZM5 13a1 1 0 1 1-2 0 1 1 0 0 1 2 0m0 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0m7 1a1 1 0 1 0-1-1 1 1 0 1 0-2 0 1 1 0 0 0 2 0 1 1 0 0 0 1 1M4.5 5a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h3V5zm4 0v3h3a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5zM3 5.5A1.5 1.5 0 0 1 4.5 4h7A1.5 1.5 0 0 1 13 5.5v2A1.5 1.5 0 0 1 11.5 9h-7A1.5 1.5 0 0 1 3 7.5zM6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z" />
           </svg>
+        </button>
+        {/* ── Add notes ── */}
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm"
+          onClick={() => onAddNotes(registration)}
+          title={registration.notes ? "Edit notes" : "Add notes"}
+        >
+          <i className="bi bi-journal-text"></i>
         </button>
         {/* ── Soft delete ── */}
         <button
@@ -993,6 +1091,10 @@ const RegistrationList = ({ storage }) => {
   // ── Edit travel state ──────────────────────────────────────────────────────
   const [travelEditTarget, setTravelEditTarget] = useState(null);
   const [isSavingTravel, setIsSavingTravel] = useState(false);
+
+  // ── Notes state ────────────────────────────────────────────────────────────
+  const [notesTarget, setNotesTarget] = useState(null);
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   const deletedCount = useMemo(
     () => registrations.filter((r) => r.isDeleted === true).length,
@@ -1077,6 +1179,29 @@ const RegistrationList = ({ storage }) => {
   const handleEditTravelCancel = useCallback(
     () => setTravelEditTarget(null),
     [],
+  );
+
+  // ── Notes handlers ─────────────────────────────────────────────────────────
+  const handleAddNotesClick = useCallback((r) => setNotesTarget(r), []);
+  const handleNotesCancel = useCallback(() => setNotesTarget(null), []);
+  const handleNotesSave = useCallback(
+    async (notes) => {
+      if (!notesTarget) return;
+      setIsSavingNotes(true);
+      try {
+        await updateDoc(doc(db, "registration-2026", notesTarget.id), {
+          notes: notes.trim(),
+          updatedAt: serverTimestamp(),
+        });
+        await refetch();
+        setNotesTarget(null);
+      } catch (err) {
+        console.error("Error saving notes:", err);
+      } finally {
+        setIsSavingNotes(false);
+      }
+    },
+    [notesTarget, refetch],
   );
 
   const uploadTicketFile = (storage, registrationId, file) => {
@@ -1466,6 +1591,7 @@ const RegistrationList = ({ storage }) => {
                               onDelete={handleDeleteClick}
                               onRestore={handleRestoreClick}
                               onEditTravel={handleEditTravelClick}
+                              onAddNotes={handleAddNotesClick}
                               showDeleted={showDeleted}
                             />
                           </td>
@@ -1529,6 +1655,12 @@ const RegistrationList = ({ storage }) => {
         onConfirm={handleRestoreConfirm}
         onCancel={handleRestoreCancel}
         isRestoring={isRestoring}
+      />
+      <NotesModal
+        registration={notesTarget}
+        onSave={handleNotesSave}
+        onCancel={handleNotesCancel}
+        isSaving={isSavingNotes}
       />
 
       <footer className="text-center py-4 mt-5">

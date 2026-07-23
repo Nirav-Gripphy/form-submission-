@@ -104,6 +104,7 @@ export const exportToExcelWithExcelJS = async (
       "Departure Travel Mode",
       "Departure Train Name",
       "Status",
+      "Notes",
       "Primary Barcode",
       "Spouse Barcode",
     ];
@@ -170,6 +171,7 @@ export const exportToExcelWithExcelJS = async (
             ? registration.departureTrainName || ""
             : ""),
         statusText,
+        registration.notes || "",
         "", // Placeholder for primary barcode
         "", // Placeholder for spouse barcode
       ];
@@ -293,6 +295,7 @@ export const exportToExcelWithReactExcel = async (
           updatedAt: registration.updatedAt
             ? formatDateTime(registration.updatedAt)
             : "",
+          notes: registration.notes || "",
           photoURL: registration.photoURL || "",
           husbandPhotoURL: registration.husbandPhotoURL || "",
           arrivalDate: registration.arrivalDate || "",
